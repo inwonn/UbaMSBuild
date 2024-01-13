@@ -1,14 +1,11 @@
-// Core.Test.cpp : This file contains the 'main' function. Program execution begins and ends there.
+// BuildTest.cpp : This file contains the 'main' function. Program execution begins and ends there.
+//
 
 #include <iostream>
-#include <gtest/gtest.h>
-#include "Build/BuildTest.h"
-//#include "Detours/DetoursTest.h"
 
-int main(int argc, char** argv)
+int main()
 {
-	testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
+    std::cout << "Hello World!\n";
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu

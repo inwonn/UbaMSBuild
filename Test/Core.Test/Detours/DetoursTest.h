@@ -15,19 +15,18 @@ protected:
         TCHAR buffer[MAX_PATH] = { 0 };
         GetModuleFileName(NULL, buffer, MAX_PATH);
         std::filesystem::path currentModulePath(buffer);
-        
-        _detoursLibPath = currentModulePath.parent_path() / "Core.dll";
+        _detoursLib = currentModulePath.parent_path() / "Core.dll";
     }
 
 public:
-    std::filesystem::path _detoursLibPath;
+    std::filesystem::path _detoursLib;
 };
 
 
 TEST_F(DetoursTest, CreateProcessWithDllsTest)
 {
     wchar_t commandLine[] = L"C:\\Windows\\System32\\notepad.exe";
-    HANDLE hProcess = ubavs::CreateProcessWithDll(commandLine, GetEnvironmentStringsW(), NULL, _detoursLibPath.wstring().c_str());
+    HANDLE hProcess = ubavs::CreateProcessWithDll(commandLine, GetEnvironmentStringsW(), NULL, _detoursLib.wstring().c_str());
     EXPECT_NE(hProcess, INVALID_HANDLE_VALUE);
 
     Sleep(1000);

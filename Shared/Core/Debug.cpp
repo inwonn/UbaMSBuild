@@ -5,10 +5,11 @@
 #include <stdio.h>
 #include <string>
 #include <format>
+#include <filesystem>
 
 namespace ubavs {
 
-	void OutputDebugStringFormat(const wchar_t* format, const wchar_t* file, const wchar_t* function, int line, ...)
+	void OutputDebugStringFormat(const wchar_t* filename, int line, const wchar_t* format, ...)
 	{
 		if (format)
 		{
@@ -19,10 +20,9 @@ namespace ubavs {
 			vswprintf_s((wchar_t*)buffer.c_str(), len, format, args);
 			va_end(args);
 
+			std::wstring output = std::format(L"[ubavs][{} Line:{}] {}", filename, line, buffer);
 
-			buffer = std::format(L"[ubavs][{}] {} [{} (Line:{}))]", function, buffer, file, line);
-
-			OutputDebugString(buffer.c_str());
+			OutputDebugString(output.c_str());
 		}
 	}
 }
