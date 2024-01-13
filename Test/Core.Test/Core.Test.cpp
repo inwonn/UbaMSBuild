@@ -1,6 +1,4 @@
 // Core.Test.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-#pragma comment(lib, "D:\\Git\\UBAVS\\x64\\Debug\\Core.lib")
 
 #include <iostream>
 #include <gtest/gtest.h>

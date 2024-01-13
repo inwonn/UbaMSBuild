@@ -85,7 +85,7 @@ namespace ubavs {
 
 		CloseHandle(processInfo.hThread);
 
-		return INVALID_HANDLE_VALUE;
+		return processInfo.hProcess;
 	}
 }
 
