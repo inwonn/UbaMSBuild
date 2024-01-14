@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package ubavs;
+
+message BuildMessage {
+  optional string commandLine = 1;
+  optional string currentDirectory =  2;
+  repeated string environment = 3;
+}

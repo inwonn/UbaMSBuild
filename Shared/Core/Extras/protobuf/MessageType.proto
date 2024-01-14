@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package ubavs;
+
+enum MessageType
+{
+    Build = 0;
+    WriteLog = 1;
+}

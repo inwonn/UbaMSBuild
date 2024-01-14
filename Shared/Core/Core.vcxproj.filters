@@ -3,17 +3,43 @@
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="Exports\Detours.h" />
+    <ClInclude Include="Core\Core.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Debug.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Messages\BuildMessage.pb.h">
+      <Filter>Messages</Filter>
+    </ClInclude>
+    <ClInclude Include="Messages\MessageType.pb.h">
+      <Filter>Messages</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="Exports\Detours.cpp" />
+    <ClCompile Include="Core\Debug.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Messages\BuildMessage.pb.cc">
+      <Filter>Messages</Filter>
+    </ClCompile>
+    <ClCompile Include="Messages\MessageType.pb.cc">
+      <Filter>Messages</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Core">
       <UniqueIdentifier>{f141e1fb-858f-47ea-9f93-6cf35394e108}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shared">
+    <Filter Include="Export">
       <UniqueIdentifier>{8b659f69-04c6-4f98-ac66-c22038e0e626}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Messages">
+      <UniqueIdentifier>{bf6d2e28-3c65-4e23-8ab0-e9000e094f0c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

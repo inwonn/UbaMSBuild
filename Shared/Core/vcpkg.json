@@ -5,7 +5,8 @@
         "boost-serialization",
         "boost-interprocess",
         "boost-scope-exit",
-        "boost-locale"
+        "boost-locale",
+        "protobuf"
         
     ],
     "overrides": [
