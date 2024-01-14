@@ -7,12 +7,12 @@
 namespace ubavs {
 	void CloseMessageChannel(const wchar_t* channelName)
 	{
-		SharedMemory sharedMemory(channelName, true);
+		SharedMemory::Clear(channelName);
 	}
 
 	bool ReadMessage(const wchar_t* channelName, wchar_t** outMessage, int timeoutMilliseconds /*= -1*/)
 	{
-		SharedMemory sharedMemory(channelName, true);
+		SharedMemory sharedMemory(channelName);
 		std::wstring loadedMessage;
 		bool timeout = sharedMemory.Read(&loadedMessage, timeoutMilliseconds);
 

@@ -14,8 +14,7 @@ namespace ubavs {
 	public:
 		static void Clear(const wchar_t* segmentName);
 
-		explicit SharedMemory(const wchar_t* segmentName, bool isHost = false);
-		~SharedMemory();
+		explicit SharedMemory(const wchar_t* segmentName);
 
 		bool Read(std::wstring* out, int timeoutMilliseconds = -1);
 		bool Write(const std::wstring& in, int timeoutMilliseconds = -1);
@@ -25,7 +24,6 @@ namespace ubavs {
 		bool canWrite();
 
 	private:
-		bool _isHost;
 		std::wstring _name;
 		boost::interprocess::managed_shared_memory _segment;
 		boost::interprocess::interprocess_mutex* _mutex;
