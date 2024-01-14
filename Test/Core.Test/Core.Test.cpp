@@ -3,7 +3,8 @@
 #include <iostream>
 #include <gtest/gtest.h>
 #include "Build/BuildTest.h"
-//#include "Detours/DetoursTest.h"
+#include "Detours/DetoursTest.h"
+#include "SharedMemory/SharedMemoryTest.h"
 
 int main(int argc, char** argv)
 {

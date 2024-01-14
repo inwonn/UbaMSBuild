@@ -3,7 +3,6 @@
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="Exports\Detours.h" />
     <ClInclude Include="Core\Core.h">
       <Filter>Core</Filter>
     </ClInclude>
@@ -16,11 +15,19 @@
     <ClInclude Include="Messages\MessageType.pb.h">
       <Filter>Messages</Filter>
     </ClInclude>
+    <ClInclude Include="Exports\Detours.h">
+      <Filter>Exports</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\SharedMemory.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Exports\Messages.h">
+      <Filter>Exports</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="Exports\Detours.cpp" />
     <ClCompile Include="Core\Debug.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -30,16 +37,28 @@
     <ClCompile Include="Messages\MessageType.pb.cc">
       <Filter>Messages</Filter>
     </ClCompile>
+    <ClCompile Include="Exports\Detours.cpp">
+      <Filter>Exports</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\SharedMemory.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Exports\Messages.cpp">
+      <Filter>Exports</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Core">
       <UniqueIdentifier>{f141e1fb-858f-47ea-9f93-6cf35394e108}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Export">
-      <UniqueIdentifier>{8b659f69-04c6-4f98-ac66-c22038e0e626}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Messages">
       <UniqueIdentifier>{bf6d2e28-3c65-4e23-8ab0-e9000e094f0c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Exports">
+      <UniqueIdentifier>{8b659f69-04c6-4f98-ac66-c22038e0e626}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
   </ItemGroup>
 </Project>

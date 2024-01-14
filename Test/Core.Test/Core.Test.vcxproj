@@ -190,6 +190,7 @@ xcopy $(ProjectDir)\TestData\ $(OutDir)TestData /E /I /Y</Command>
   <ItemGroup>
     <ClInclude Include="Build\BuildTest.h" />
     <ClInclude Include="Detours\DetoursTest.h" />
+    <ClInclude Include="SharedMemory\SharedMemoryTest.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\Core\Core.vcxproj">

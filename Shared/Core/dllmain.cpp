@@ -1,11 +1,14 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "pch.h"
 #include "Core/Core.h"
+#include "Core/SharedMemory.h"
+#include "Messages/BuildMessage.pb.h"
 
 #include <detours/detours.h>
 #include <boost/algorithm/string.hpp>
-#include "Messages/BuildMessage.pb.h"
 #include <boost/locale/encoding_utf.hpp>
+
+std::wstring gChannelName = L"UBAVS";
 
 BOOL (*True_CreateProcessW)(
     _In_opt_ LPCWSTR lpApplicationName,
@@ -53,11 +56,6 @@ BOOL WINAPI Detoured_CreateProcessW(
         std::string currentDirectory = boost::locale::conv::utf_to_utf<char>(lpCurrentDirectory);
         message.set_currentdirectory(boost::locale::conv::utf_to_utf<char>(currentDirectory));
 
-        // get environment list
-        LPWCH env = GetEnvironmentStringsW();
-        LPWSTR lpszVariable;
-        LPWSTR lpszValue;
-
         const wchar_t* lpEnv = static_cast<const wchar_t*>(lpEnvironment);
         while (*lpEnv != L'\0')
         {
@@ -67,6 +65,24 @@ BOOL WINAPI Detoured_CreateProcessW(
 
             lpEnv += env.size() + 1;
         }
+
+        /*ubavs::SharedMemory sharedMemory(gChannelName.c_str());
+        try
+        {
+            std::string serializedMessage = message.SerializeAsString();
+            std::wstring serializedMessageW = boost::locale::conv::utf_to_utf<wchar_t>(serializedMessage);
+
+            DEBUG_LOG(L"Send ---> %s", serializedMessageW.c_str());
+	        sharedMemory.Write(serializedMessageW.c_str());
+        }
+        catch (const std::exception& e)
+        {
+			DEBUG_LOG(L"Exception : %s", e.what());
+		}
+        catch (...)
+        {
+            DEBUG_LOG(L"Exception : %s");
+        }*/
     }
 
     return True_CreateProcessW(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
