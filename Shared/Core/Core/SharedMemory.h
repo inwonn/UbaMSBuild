@@ -17,8 +17,8 @@ namespace ubavs {
 		explicit SharedMemory(const wchar_t* segmentName, bool isHost = false);
 		~SharedMemory();
 
-		void Read(std::wstring* out);
-		void Write(const std::wstring& in);
+		bool Read(std::wstring* out, int timeoutMilliseconds = -1);
+		bool Write(const std::wstring& in, int timeoutMilliseconds = -1);
 
 	private:
 		bool canRead();

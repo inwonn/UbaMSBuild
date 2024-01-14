@@ -27,11 +27,30 @@ public:
 
 TEST_F(ShardMemoryTest, WriteReadTest)
 {
-    ubavs::WriteMessage(channelName, L"hello world.");
+    bool timeout = ubavs::WriteMessage(channelName, L"hello world.");
+    EXPECT_EQ(timeout, false);
 
-    const wchar_t* message = ubavs::ReadMessage(channelName);
+    wchar_t* message = nullptr;
+    timeout = ubavs::ReadMessage(channelName, &message);
+    EXPECT_EQ(timeout, false);
 
     EXPECT_TRUE(wcscmp(message, L"hello world.") == 0);
 
-    ubavs::FreeMessage((wchar_t*)message);
+    ubavs::FreeMessage(message);
+}
+
+TEST_F(ShardMemoryTest, TimeoutTest)
+{
+    bool timeout = ubavs::WriteMessage(channelName, L"hello world.");
+    EXPECT_EQ(timeout, false);
+
+    timeout = ubavs::WriteMessage(channelName, L"hello world.", 1000);
+    EXPECT_EQ(timeout, true);
+
+    wchar_t* message = nullptr;
+    timeout = ubavs::ReadMessage(channelName, &message, 1000);
+    EXPECT_EQ(timeout, false);
+
+    timeout = ubavs::ReadMessage(channelName, &message, 1000);
+    EXPECT_EQ(timeout, true);
 }

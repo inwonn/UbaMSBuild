@@ -110,7 +110,8 @@
       <EnableUAC>false</EnableUAC>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(OutDir)  $(OutDir)..\Core.Test\ /E /I /Y</Command>
+      <Command>xcopy $(OutDir)  $(OutDir)..\Core.Test\ /E /I /Y
+xcopy $(OutDir)  $(OutDir)..\BuildSystem\ /E /I /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -124,6 +125,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -133,7 +135,8 @@
       <EnableUAC>false</EnableUAC>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(OutDir)  $(OutDir)..\Core.Test\ /E /I /Y</Command>
+      <Command>xcopy $(OutDir)  $(OutDir)..\Core.Test\ /E /I /Y
+xcopy $(OutDir)  $(OutDir)..\BuildSystem\ /E /I /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -153,7 +156,8 @@
       <EnableUAC>false</EnableUAC>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(OutDir)  $(OutDir)..\Core.Test\ /E /I /Y</Command>
+      <Command>xcopy $(OutDir)  $(OutDir)..\Core.Test\ /E /I /Y
+xcopy $(OutDir)  $(OutDir)..\BuildSystem\ /E /I /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -167,6 +171,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -176,7 +181,8 @@
       <EnableUAC>false</EnableUAC>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(OutDir)  $(OutDir)..\Core.Test\ /E /I /Y</Command>
+      <Command>xcopy $(OutDir)  $(OutDir)..\Core.Test\ /E /I /Y
+xcopy $(OutDir)  $(OutDir)..\BuildSystem\ /E /I /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

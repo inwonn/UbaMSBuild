@@ -1,6 +1,9 @@
 #include "pch.h"
+#include "Debug.h"
 #include "SharedMemory.h"
 #include <boost/bind/bind.hpp>
+#include <boost/chrono.hpp>
+#include <boost/thread/thread_time.hpp>
 
 namespace ubavs {
 
@@ -25,29 +28,68 @@ namespace ubavs {
 		if (_isHost) boost::interprocess::shared_memory_object::remove(_name.c_str());
 	}
 
-	void SharedMemory::Read(std::wstring* out)
+	bool SharedMemory::Read(std::wstring* out, int timeoutMilliseconds /*= -1*/)
 	{
 		if (!_isHost) throw std::exception("Client cannot read from shared memory");
 
 		boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(*_mutex);
-		_readCV->wait(lock, boost::bind(&SharedMemory::canRead, this));
 
-		out->assign(_data->c_str(), _data->size());
-		_data->clear();
+		bool timeout = false;
+		if (timeoutMilliseconds != -1)
+		{
+			boost::system_time const timePoint = boost::get_system_time() + boost::posix_time::milliseconds(timeoutMilliseconds);
+			if (!_readCV->timed_wait(lock, timePoint, boost::bind(&SharedMemory::canRead, this)))
+			{
+				timeout = true;
+				DEBUG_LOG(L"Read timed out");
+				
+			}
+			else
+			{
+				out->assign(_data->c_str(), _data->size());
+				_data->clear();
+			}
+		}
+		else
+		{
+			_readCV->wait(lock, boost::bind(&SharedMemory::canRead, this));
+			out->assign(_data->c_str(), _data->size());
+			_data->clear();
+		}
 
 		_writeCV->notify_one();
+
+		return timeout;
 	}
 
-	void SharedMemory::Write(const std::wstring& in)
+	bool SharedMemory::Write(const std::wstring& in, int timeoutMilliseconds /*= -1*/)
 	{
 		if (_isHost) throw std::exception("Host cannot write to shared memory");
 
 		boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(*_mutex);
-		_writeCV->wait(lock, boost::bind(&SharedMemory::canWrite, this));
 
-		_data->assign(in.c_str());
+		bool timeout = false;
+		if (timeoutMilliseconds != -1)
+		{
+			boost::system_time const timePoint = boost::get_system_time() + boost::posix_time::milliseconds(timeoutMilliseconds);
+			if (!_writeCV->timed_wait(lock, timePoint, boost::bind(&SharedMemory::canWrite, this)))
+			{
+				timeout = true;
+				DEBUG_LOG(L"Write timed out");
+			}
+			else
+			{
+				_data->assign(in.c_str());
+			}
+		}
+		else
+		{	
+			_writeCV->wait(lock, boost::bind(&SharedMemory::canWrite, this));
+			_data->assign(in.c_str());
+		}
 
 		_readCV->notify_one();
+		return timeout;
 	}
 
 	inline bool SharedMemory::canRead()

@@ -10,17 +10,20 @@ namespace ubavs {
 		SharedMemory sharedMemory(channelName, true);
 	}
 
-	const wchar_t* ReadMessage(const wchar_t* channelName)
+	bool ReadMessage(const wchar_t* channelName, wchar_t** outMessage, int timeoutMilliseconds /*= -1*/)
 	{
 		SharedMemory sharedMemory(channelName, true);
 		std::wstring loadedMessage;
-		sharedMemory.Read(&loadedMessage);
+		bool timeout = sharedMemory.Read(&loadedMessage, timeoutMilliseconds);
 
-		size_t messageLength = loadedMessage.length();
-		wchar_t* message = new wchar_t[messageLength + 1];
-		wcscpy_s(message, messageLength + 1, loadedMessage.c_str());
-
-		return message;
+		if (!timeout)
+		{
+			size_t messageLength = loadedMessage.length();
+			*outMessage = new wchar_t[messageLength + 1];
+			wcscpy_s(*outMessage, messageLength + 1, loadedMessage.c_str());
+		}
+		
+		return timeout;
 	}
 
 	void FreeMessage(wchar_t* message)
@@ -32,10 +35,10 @@ namespace ubavs {
 		}
 	}
 
-	void WriteMessage(const wchar_t* channelName, const wchar_t* message)
+	bool WriteMessage(const wchar_t* channelName, const wchar_t* message, int timeoutMilliseconds /*= -1*/)
 	{
 		SharedMemory sharedMemory(channelName);
 
-		sharedMemory.Write(message);
+		return sharedMemory.Write(message, timeoutMilliseconds);
 	}
 }
