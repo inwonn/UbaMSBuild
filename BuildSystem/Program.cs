@@ -6,35 +6,41 @@ namespace BuildSystem
     class Program
     {
         [DllImport("Core.dll", CharSet = CharSet.Unicode)]
-        public static extern void CloseMessageChannel(string channelName);
+        public static extern void CreateMessageChannel();
 
         [DllImport("Core.dll", CharSet = CharSet.Unicode)]
-        public static extern bool ReadMessage(string channelName, out IntPtr outMessage, int timeout = -1);
+        public static extern void ReleaseMessageChannel();
+
+        [DllImport("Core.dll", CharSet = CharSet.Unicode)]
+        public static extern int ReadMessage(out IntPtr outMessage, int timeout = -1);
 
         [DllImport("Core.dll", CharSet=CharSet.Unicode)]
-        public static extern bool WriteMessage(string channelName, string message, int timeout = -1);
+        public static extern int WriteMessage(string message, int timeout = -1);
 
         [DllImport("Core.dll", CharSet = CharSet.Unicode)]
-        public static extern void FreeMessage(IntPtr messagePtr);
+        public static extern void FreeReadMessage(IntPtr messagePtr);
 
         static void Main(string[] args)
         {
-            CloseMessageChannel("TestChannel");
-            bool timeout = WriteMessage("TestChannel", "hello world!");
-            if (timeout)
+            ReleaseMessageChannel();
+            CreateMessageChannel();
+            int error = WriteMessage("hello world!");
+            if (error == 1)
             {
                 Console.WriteLine("WriteMessage timed out!");
             }
 
-            timeout = ReadMessage("TestChannel", out IntPtr messagePtr);
-            if (timeout == false && messagePtr != IntPtr.Zero)
+            error = ReadMessage(out IntPtr messagePtr);
+            if (error == 0 && messagePtr != IntPtr.Zero)
             {
                 string? result = Marshal.PtrToStringUni(messagePtr);
                 if (messagePtr != IntPtr.Zero)
                 {
-                    FreeMessage(messagePtr);
+                    FreeReadMessage(messagePtr);
                 }
             }
+
+            ReleaseMessageChannel();
         }
     }
 }
