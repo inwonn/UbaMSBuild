@@ -2,6 +2,7 @@
 #include "pch.h"
 #include "Core/Core.h"
 #include "Core/SharedMemory.h"
+#include "Exports/Messages.h"
 #include "Messages/BuildMessage.pb.h"
 
 #include <detours/detours.h>
@@ -66,14 +67,13 @@ BOOL WINAPI Detoured_CreateProcessW(
             lpEnv += env.size() + 1;
         }
 
-        /*ubavs::SharedMemory sharedMemory(gChannelName.c_str());
         try
         {
             std::string serializedMessage = message.SerializeAsString();
             std::wstring serializedMessageW = boost::locale::conv::utf_to_utf<wchar_t>(serializedMessage);
 
-            DEBUG_LOG(L"Send ---> %s\n", serializedMessageW.c_str());
-	        sharedMemory.Write(serializedMessageW.c_str());
+            DEBUG_LOG(L"Send ---> %s\n", serializedMessageW);
+            ubavs::WriteMessage(serializedMessageW.c_str(), 1000);
         }
         catch (const std::exception& e)
         {
@@ -82,7 +82,7 @@ BOOL WINAPI Detoured_CreateProcessW(
         catch (...)
         {
             DEBUG_LOG(L"Exception : %s\n");
-        }*/
+        }
     }
 
     return True_CreateProcessW(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
@@ -101,6 +101,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     {
     case DLL_PROCESS_ATTACH:
         DEBUG_LOG(L"DLL_PROCESS_ATTACH\n");
+        ubavs::CreateMessageChannel();
         DetourRestoreAfterWith();
 		DetourTransactionBegin();
 		DetourUpdateThread(GetCurrentThread());

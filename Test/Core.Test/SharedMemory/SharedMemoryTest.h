@@ -11,46 +11,44 @@ protected:
     virtual ~ShardMemoryTest() {}
 
     virtual void SetUp() override
-    {
-        ubavs::CloseMessageChannel(channelName);
-    }
-
-    virtual void TearDown() override
-    {
-		ubavs::CloseMessageChannel(channelName);
+	{
+        ubavs::ReleaseMessageChannel();
+        ubavs::CreateMessageChannel();
 	}
 
-public:
-    const wchar_t* channelName = L"TestChannel";
+    virtual void TearDown() override
+	{
+        ubavs::ReleaseMessageChannel();
+	}
 };
 
 
 TEST_F(ShardMemoryTest, WriteReadTest)
 {
-    bool timeout = ubavs::WriteMessage(channelName, L"hello world.");
-    EXPECT_EQ(timeout, false);
+    int error = ubavs::WriteMessage(L"hello world.");
+    EXPECT_EQ(error, 0/*noerror*/);
 
     wchar_t* message = nullptr;
-    timeout = ubavs::ReadMessage(channelName, &message);
-    EXPECT_EQ(timeout, false);
+    error = ubavs::ReadMessage(&message);
+    EXPECT_EQ(error, 0/*noerror*/);
 
     EXPECT_TRUE(wcscmp(message, L"hello world.") == 0);
 
-    ubavs::FreeMessage(message);
+    ubavs::FreeReadMessage(message);
 }
 
 TEST_F(ShardMemoryTest, TimeoutTest)
 {
-    bool timeout = ubavs::WriteMessage(channelName, L"hello world.");
-    EXPECT_EQ(timeout, false);
+    int error = ubavs::WriteMessage(L"hello world.", 1000);
+    EXPECT_EQ(error, 0/*noerror*/);
 
-    timeout = ubavs::WriteMessage(channelName, L"hello world.", 1000);
-    EXPECT_EQ(timeout, true);
+    error = ubavs::WriteMessage(L"hello world.", 1000);
+    EXPECT_EQ(error, 1/*timeout*/);
 
     wchar_t* message = nullptr;
-    timeout = ubavs::ReadMessage(channelName, &message, 1000);
-    EXPECT_EQ(timeout, false);
+    error = ubavs::ReadMessage(&message, 1000);
+    EXPECT_EQ(error, 0/*noerror*/);
 
-    timeout = ubavs::ReadMessage(channelName, &message, 1000);
-    EXPECT_EQ(timeout, true);
+    error = ubavs::ReadMessage(&message, 1000);
+    EXPECT_EQ(error, 1/*timeout*/);
 }

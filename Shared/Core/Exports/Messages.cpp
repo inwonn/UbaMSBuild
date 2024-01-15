@@ -5,28 +5,31 @@
 #include <boost/locale/encoding_utf.hpp>
 
 namespace ubavs {
-	void CloseMessageChannel(const wchar_t* channelName)
+	void CreateMessageChannel()
 	{
-		SharedMemory::Clear(channelName);
+		SharedMemory::Create();
+	}
+	void ReleaseMessageChannel()
+	{
+		SharedMemory::Release();
 	}
 
-	bool ReadMessage(const wchar_t* channelName, wchar_t** outMessage, int timeoutMilliseconds /*= -1*/)
+	int ReadMessage(wchar_t** outMessage, int timeoutMilliseconds /*= -1*/)
 	{
-		SharedMemory sharedMemory(channelName);
 		std::wstring loadedMessage;
-		bool timeout = sharedMemory.Read(&loadedMessage, timeoutMilliseconds);
+		SharedMemory::ErrorType error = SharedMemory::Get().Read(&loadedMessage, timeoutMilliseconds);
 
-		if (!timeout)
+		if (error == SharedMemory::ErrorType::NoError)
 		{
 			size_t messageLength = loadedMessage.length();
 			*outMessage = new wchar_t[messageLength + 1];
 			wcscpy_s(*outMessage, messageLength + 1, loadedMessage.c_str());
 		}
 		
-		return timeout;
+		return (int)error;
 	}
 
-	void FreeMessage(wchar_t* message)
+	void FreeReadMessage(wchar_t* message)
 	{
 		if (message != nullptr)
 		{
@@ -35,10 +38,8 @@ namespace ubavs {
 		}
 	}
 
-	bool WriteMessage(const wchar_t* channelName, const wchar_t* message, int timeoutMilliseconds /*= -1*/)
+	int WriteMessage(const wchar_t* message, int timeoutMilliseconds /*= -1*/)
 	{
-		SharedMemory sharedMemory(channelName);
-
-		return sharedMemory.Write(message, timeoutMilliseconds);
+		return (int)SharedMemory::Get().Write(message, timeoutMilliseconds);
 	}
 }
