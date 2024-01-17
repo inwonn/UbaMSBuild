@@ -1,52 +1,70 @@
 #pragma once
 
-#include <boost/interprocess/managed_shared_memory.hpp>
-#include <boost/interprocess/sync/interprocess_mutex.hpp>
-#include <boost/interprocess/sync/interprocess_condition.hpp>
-#include <boost/algorithm/string.hpp>
+#include "Core.h"
+#include <Windows.h>
+#include <functional>
 
 namespace ubavs {
 
-	class SharedMemory
-	{
-		typedef boost::interprocess::allocator<wchar_t, boost::interprocess::managed_shared_memory::segment_manager> char_allocator_t;
-		typedef std::basic_string<wchar_t, std::char_traits<wchar_t>, char_allocator_t> shared_memory_string_t;
+	static const int PAGE_SIZE = 65536;
+	static const int PAGE_COUNT = 32;
+	static const wchar_t* PAGE_PREFIX = L"GLOBAL\\UBAVS_PAGE_{}";
+	static const wchar_t* SHARED_MEMORY_PREFIX = L"GLOBAL\\UBAVS_SHARED_MEMORY_{}";
 
+	enum class PageState
+	{
+		Free = 0,
+		Allocated = 1
+	};
+
+	class ScopedLock
+	{
 	public:
-		enum class ErrorType
+		ScopedLock(HANDLE hMutex);
+		~ScopedLock();
+
+	private:
+		HANDLE _hMutex;
+	};
+
+	struct Page
+	{
+		struct Header
 		{
-			NoError = 0,
-			Timeout = 1
+			PageState state;
+			int index;
+			int size;
 		};
 
-		static SharedMemory& Get();
-		static void Create();
-		static void Release();
-		
-		ErrorType Read(std::wstring* out, int timeoutMilliseconds = -1);
-		ErrorType Write(const std::wstring& in, int timeoutMilliseconds = -1);
+		void Write(const void* buffer, int size);
+		void Read(void** buffer, int* size);
 
-	private:
-		explicit SharedMemory();
-
-		bool canRead() const;
-		bool canWrite() const;
-
-		bool isInitialized() const { return _data != nullptr; }
-
-		void init();
-		void release();
-
-	private:
-		static const int SHARED_MEMORY_SIZE = 65536;
-		static SharedMemory gSharedMemory;
-
-		bool _isInitialized;
-		boost::interprocess::managed_shared_memory _segment;
-		boost::interprocess::interprocess_mutex* _mutex;
-		boost::interprocess::interprocess_condition* _readCondition;
-		boost::interprocess::interprocess_condition* _writeCondition;
-		bool* _hasAnyData;
-		shared_memory_string_t* _data;
+		Header header;
+		unsigned char data[PAGE_SIZE - sizeof(Header)];
 	};
+
+	class SharedMemory
+	{
+	public:
+		struct SharedMemoryHeader
+		{
+			int capacity = 0;
+		};
+
+	public:
+		SharedMemory(const SharedMemory&) = delete;
+		SharedMemory& operator=(const SharedMemory&) = delete;
+		SharedMemory(const wchar_t* name);
+		~SharedMemory();
+
+		Page* Alloc();
+		void Free(Page* page);
+		void ForEach(std::function<void(Page*)> callback);
+
+	private:
+		HANDLE _hMapFile;
+		SharedMemoryHeader* _header;
+	};
+
+	extern "C" CORE_API void Test();
 }

@@ -2,22 +2,12 @@
     "builtin-baseline": "53bef8994c541b6561884a8395ea35715ece75db",
     "dependencies": [
         "detours",
-        "boost-serialization",
-        "boost-interprocess",
         "boost-scope-exit",
         "boost-locale",
         "protobuf"
         
     ],
     "overrides": [
-        {
-            "name": "boost-serialization",
-            "version": "1.83.0"
-        },
-        {
-            "name": "boost-interprocess",
-            "version": "1.83.0"
-        },
         {
             "name": "boost-scope-exit",
             "version": "1.83.0"

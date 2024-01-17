@@ -21,9 +21,6 @@
     <ClInclude Include="Core\SharedMemory.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Exports\Messages.h">
-      <Filter>Exports</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -42,9 +39,6 @@
     </ClCompile>
     <ClCompile Include="Core\SharedMemory.cpp">
       <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Exports\Messages.cpp">
-      <Filter>Exports</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

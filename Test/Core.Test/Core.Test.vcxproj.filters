@@ -23,9 +23,6 @@
     <ClInclude Include="Build\BuildTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Detours\DetoursTest.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SharedMemory\SharedMemoryTest.h" />
   </ItemGroup>
 </Project>

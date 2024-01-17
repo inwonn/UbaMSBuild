@@ -1,134 +1,148 @@
 #include "pch.h"
 #include "Debug.h"
 #include "SharedMemory.h"
-#include <boost/bind/bind.hpp>
-#include <boost/chrono.hpp>
-#include <boost/thread/thread_time.hpp>
+#include <Windows.h>
+#include <format>
 
 namespace ubavs {
 
-	SharedMemory SharedMemory::gSharedMemory;
-	SharedMemory& SharedMemory::Get()
+	ScopedLock::ScopedLock(HANDLE hMutex)
 	{
-		return gSharedMemory;
+		_hMutex = hMutex;
+		WaitForSingleObject(_hMutex, INFINITE);
 	}
 
-	void SharedMemory::Create()
+	ScopedLock::~ScopedLock()
 	{
-		if (SharedMemory::Get().isInitialized())
-			std::runtime_error("Shared memory already initialized");
-
-		SharedMemory::Get().init();
+		ReleaseMutex(_hMutex);
+		CloseHandle(_hMutex);
 	}
 
-	void SharedMemory::Release()
+	void Page::Write(const void* buffer, int size)
 	{
-		SharedMemory::Get().release();
+		header.size = size;
+		memcpy(data, buffer, size);
 	}
 
-	SharedMemory::ErrorType SharedMemory::Read(std::wstring* out, int timeoutMilliseconds /*= -1*/)
+	void Page::Read(void** buffer, int* size)
 	{
-		SharedMemory::ErrorType error = SharedMemory::ErrorType::NoError;
-		BOOST_TRY {
-			boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(*_mutex);
-			if (timeoutMilliseconds != -1)
-			{
-				boost::system_time const timePoint = boost::get_system_time() + boost::posix_time::milliseconds(timeoutMilliseconds);
-				if (!_readCondition->timed_wait(lock, timePoint, boost::bind(&SharedMemory::canRead, this)))
-				{
-					DEBUG_LOG(L"Read timed out\n");
-					error = SharedMemory::ErrorType::Timeout;
-				}
-				else
-				{
-					out->assign(_data->begin(), _data->end());
-					*_hasAnyData = false;
-				}
-			}
-			else
-			{
-				_readCondition->wait(lock, boost::bind(&SharedMemory::canRead, this));
-				out->assign(_data->begin(), _data->end());
-				*_hasAnyData = false;
-			}
-		}
-		BOOST_CATCH(std::exception& e)
+		*size = header.size;
+		memcpy(data, *buffer, header.size);
+	}
+
+	SharedMemory::SharedMemory(const wchar_t* name)
+	{
+		_hMapFile = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, name);
+		if (_hMapFile == NULL)
 		{
-			DEBUG_LOG(L"Exception: %s\n", e.what());
-		}
-		BOOST_CATCH_END
-
-		_writeCondition->notify_one();
-
-		return error;
-	}
-
-	SharedMemory::ErrorType SharedMemory::Write(const std::wstring& in, int timeoutMilliseconds /*= -1*/)
-	{
-		SharedMemory::ErrorType error = SharedMemory::ErrorType::NoError;
-		BOOST_TRY{
-			boost::interprocess::scoped_lock<boost::interprocess::interprocess_mutex> lock(*_mutex);
-			if (timeoutMilliseconds != -1)
+			LARGE_INTEGER capacity;
+			capacity.QuadPart = PAGE_SIZE * PAGE_COUNT;
+			_hMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE | SEC_RESERVE, capacity.HighPart, capacity.LowPart, name);
+			if (_hMapFile == NULL)
 			{
-				boost::system_time const timePoint = boost::get_system_time() + boost::posix_time::milliseconds(timeoutMilliseconds);
-				if (!_writeCondition->timed_wait(lock, timePoint, boost::bind(&SharedMemory::canWrite, this)))
-				{
-					DEBUG_LOG(L"Write timed out\n");
-					error = SharedMemory::ErrorType::Timeout;
-				}
-				else
-				{
-					_data->assign(in.begin(), in.end());
-					*_hasAnyData = true;
-				}
+				// LOG
 			}
-			else
+
+			_header = (SharedMemoryHeader*)MapViewOfFile(_hMapFile, FILE_MAP_ALL_ACCESS, 0, 0, PAGE_SIZE);
+			if (_header == nullptr)
 			{
-				_writeCondition->wait(lock, boost::bind(&SharedMemory::canWrite, this));
-				_data->assign(in.begin(), in.end());
-				*_hasAnyData = true;
+				// LOG
+			}
+
+			if (!::VirtualAlloc(_header, PAGE_SIZE, MEM_COMMIT, PAGE_READWRITE))
+			{
+				// LOG
 			}
 		}
-		BOOST_CATCH(std::exception& e)
+		else
 		{
-			DEBUG_LOG(L"Exception: %s\n", e.what());
+			_header = (SharedMemoryHeader*)MapViewOfFile(_hMapFile, FILE_MAP_ALL_ACCESS, 0, 0, PAGE_SIZE);
 		}
-		BOOST_CATCH_END
-
-		_readCondition->notify_one();
-
-		return error;
 	}
 
-	SharedMemory::SharedMemory()
-		: _isInitialized(false)
-		, _data(nullptr)
+	SharedMemory::~SharedMemory()
 	{
+		CloseHandle(_hMapFile);
 	}
 
-	void SharedMemory::init()
+	Page* SharedMemory::Alloc()
 	{
-		_segment = boost::interprocess::managed_shared_memory(boost::interprocess::open_or_create, L"UBAVS", SHARED_MEMORY_SIZE);
-		_mutex = _segment.find_or_construct<boost::interprocess::interprocess_mutex>("lock")();
-		_readCondition = _segment.find_or_construct<boost::interprocess::interprocess_condition>("read")();
-		_writeCondition = _segment.find_or_construct<boost::interprocess::interprocess_condition>("write")();
-		_hasAnyData = _segment.find_or_construct<bool>("any")();
-		_data = _segment.find_or_construct<shared_memory_string_t>("data")(L"", _segment.get_segment_manager());
-		_data->resize(10000);
+		LARGE_INTEGER offset;
+		offset.QuadPart = PAGE_SIZE;
+
+		for (int idx = 0; idx < _header->capacity; idx++)
+		{
+			Page* page = (Page*)MapViewOfFile(_hMapFile, FILE_MAP_ALL_ACCESS, offset.HighPart, offset.LowPart, PAGE_SIZE);
+			if (page != nullptr && page->header.state == PageState::Free)
+			{
+				return page;
+			}
+			offset.QuadPart += PAGE_SIZE;
+		}
+
+		Page* page = (Page*)MapViewOfFile(_hMapFile, FILE_MAP_ALL_ACCESS, offset.HighPart, offset.LowPart, PAGE_SIZE);
+		if (page != nullptr)
+		{
+			if (!::VirtualAlloc(page, PAGE_SIZE, MEM_COMMIT, PAGE_READWRITE))
+			{
+				// LOG
+			}
+
+			page->header.state = PageState::Allocated;
+			page->header.size = 0;
+			page->header.index = _header->capacity;
+			_header->capacity++;
+
+			return page;
+		}
+		
+
+		return nullptr;
+	}
+	void SharedMemory::Free(Page* page)
+	{
+		page->header.state = PageState::Free;
+		page->header.size = 0;
+		page->header.index = 0;
 	}
 
-	void SharedMemory::release()
+	void SharedMemory::ForEach(std::function<void(Page*)> callback)
 	{
-		boost::interprocess::shared_memory_object::remove(L"UBAVS");
+		LARGE_INTEGER offset;
+		offset.QuadPart = PAGE_SIZE;
+
+		for (int idx = 0; idx < _header->capacity; idx++)
+		{
+			Page* page = (Page*)MapViewOfFile(_hMapFile, FILE_MAP_ALL_ACCESS, offset.HighPart, offset.LowPart, PAGE_SIZE);
+			if (page != nullptr)
+			{
+				callback(page);
+			}
+			offset.QuadPart += PAGE_SIZE;
+		}
 	}
 
-	inline bool SharedMemory::canRead() const
+	void Test()
 	{
-		return *_hasAnyData;
-	}
+		SharedMemory shm1(L"UBAVS");
+		SharedMemory shm2(L"UBAVS");
+		SharedMemory shm3(L"UBAVS");
 
-	inline bool SharedMemory::canWrite() const
-	{
-		return !*_hasAnyData;
+		Page* p2 = shm2.Alloc();
+		Page* p3 = shm3.Alloc();
+
+		const char* msg = "Hello World";
+		p2->Write(msg, strlen(msg));
+
+		const char* msg2 = "Hello World2";
+		p3->Write(msg2, strlen(msg2));
+
+		shm1.ForEach([&](Page* page) {
+			if (page->header.state == PageState::Allocated)
+			{
+				std::string str((char*)page->data, page->header.size);
+				shm1.Free(page);
+			}
+		});
 	}
 }
