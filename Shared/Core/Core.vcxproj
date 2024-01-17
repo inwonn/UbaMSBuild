@@ -189,7 +189,7 @@ xcopy $(OutDir)  $(OutDir)..\BuildSystem\ /E /I /Y</Command>
   <ItemGroup>
     <ClInclude Include="Core\Core.h" />
     <ClInclude Include="Core\Debug.h" />
-    <ClInclude Include="Core\SharedMemory.h" />
+    <ClInclude Include="Core\MemoryMappedFile.h" />
     <ClInclude Include="Exports\Detours.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Messages\BuildMessage.pb.h" />
@@ -198,7 +198,7 @@ xcopy $(OutDir)  $(OutDir)..\BuildSystem\ /E /I /Y</Command>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Debug.cpp" />
-    <ClCompile Include="Core\SharedMemory.cpp" />
+    <ClCompile Include="Core\MemoryMappedFile.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Exports\Detours.cpp" />
     <ClCompile Include="Messages\BuildMessage.pb.cc">

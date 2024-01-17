@@ -1,5 +1,5 @@
 #pragma once
-#include "../../../Shared/Core/Core/SharedMemory.h"
+#include "../../../Shared/Core/Core/MemoryMappedFile.h"
 
 #include <gtest/gtest.h>
 #include <filesystem>

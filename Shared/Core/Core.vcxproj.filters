@@ -18,7 +18,7 @@
     <ClInclude Include="Exports\Detours.h">
       <Filter>Exports</Filter>
     </ClInclude>
-    <ClInclude Include="Core\SharedMemory.h">
+    <ClInclude Include="Core\MemoryMappedFile.h">
       <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
@@ -37,7 +37,7 @@
     <ClCompile Include="Exports\Detours.cpp">
       <Filter>Exports</Filter>
     </ClCompile>
-    <ClCompile Include="Core\SharedMemory.cpp">
+    <ClCompile Include="Core\MemoryMappedFile.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>

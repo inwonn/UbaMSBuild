@@ -1,7 +1,7 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "pch.h"
 #include "Core/Core.h"
-#include "Core/SharedMemory.h"
+#include "Core/MemoryMappedFile.h"
 #include "Messages/BuildMessage.pb.h"
 
 #include <detours/detours.h>
