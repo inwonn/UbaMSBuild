@@ -2,8 +2,8 @@
 
 #include <iostream>
 #include <gtest/gtest.h>
-//#include "Build/BuildTest.h"
-#include "SharedMemory/SharedMemoryTest.h"
+#include "Build/BuildTest.h"
+//#include "SharedMemory/SharedMemoryTest.h"
 
 int main(int argc, char** argv)
 {

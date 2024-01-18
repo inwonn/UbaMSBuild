@@ -190,6 +190,7 @@ xcopy $(OutDir)  $(OutDir)..\BuildSystem\ /E /I /Y</Command>
     <ClInclude Include="Core\Core.h" />
     <ClInclude Include="Core\Debug.h" />
     <ClInclude Include="Core\MemoryMappedFile.h" />
+    <ClInclude Include="Exports\Communication.h" />
     <ClInclude Include="Exports\Detours.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Messages\BuildMessage.pb.h" />
@@ -200,6 +201,7 @@ xcopy $(OutDir)  $(OutDir)..\BuildSystem\ /E /I /Y</Command>
     <ClCompile Include="Core\Debug.cpp" />
     <ClCompile Include="Core\MemoryMappedFile.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="Exports\Communication.cpp" />
     <ClCompile Include="Exports\Detours.cpp" />
     <ClCompile Include="Messages\BuildMessage.pb.cc">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>

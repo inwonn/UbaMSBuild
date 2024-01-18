@@ -8,14 +8,60 @@
 #include <boost/locale.hpp>
 
 namespace ubavs {
+
+	BOOL(*True_CreateProcessW)(
+		_In_opt_ LPCWSTR lpApplicationName,
+		_Inout_opt_ LPWSTR lpCommandLine,
+		_In_opt_ LPSECURITY_ATTRIBUTES lpProcessAttributes,
+		_In_opt_ LPSECURITY_ATTRIBUTES lpThreadAttributes,
+		_In_ BOOL bInheritHandles,
+		_In_ DWORD dwCreationFlags,
+		_In_opt_ LPVOID lpEnvironment,
+		_In_opt_ LPCWSTR lpCurrentDirectory,
+		_In_ LPSTARTUPINFOW lpStartupInfo,
+		_Out_ LPPROCESS_INFORMATION lpProcessInformation
+		) = ::CreateProcessW;
+
+	CORE_API BOOL CreateProcessWithDllEx(
+		LPCWSTR lpApplicationName,
+		LPWSTR lpCommandLine,
+		LPSECURITY_ATTRIBUTES lpProcessAttributes,
+		LPSECURITY_ATTRIBUTES lpThreadAttributes,
+		BOOL bInheritHandles,
+		DWORD dwCreationFlags,
+		LPVOID lpEnvironment,
+		LPCWSTR lpCurrentDirectory,
+		LPSTARTUPINFOW lpStartupInfo,
+		LPPROCESS_INFORMATION lpProcessInformation,
+		LPCWSTR lpDllName)
+	{
+		std::string detoursLib = boost::locale::conv::utf_to_utf<char>(lpDllName);
+		if (!DetourCreateProcessWithDll(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags | CREATE_SUSPENDED, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation, detoursLib.c_str(), True_CreateProcessW))
+		{
+			return FALSE;
+		}	
+
+		//if (!AlternateGroupAffinity(lpProcessInformation->hThread))
+		//{
+		//	//logger.Error(TC("Failed to set thread group affinity to process"));//% ls. (% ls)"), commandLine.c_str(), LastErrorToText().data);
+		//	return FALSE;
+		//}
+
+		if (ResumeThread(lpProcessInformation->hThread) == -1)
+		{
+			//logger.Error(TC("Failed to resume thread for"));//% ls. (% ls)", commandLine.c_str(), LastErrorToText().data);
+			return FALSE;
+		}
+
+		return TRUE;
+	}
+
 	HANDLE CreateProcessWithDll(
 		LPWSTR lpCommandLine,
 		LPVOID lpEnvironment,
 		LPCWSTR lpCurrentDirectory,
 		LPCWSTR lpDllName)
 	{
-		std::string detoursLib = boost::locale::conv::utf_to_utf<char>(lpDllName);
-
 		STARTUPINFOEX siex;
 		STARTUPINFO& si = siex.StartupInfo;
 		ZeroMemory(&siex, sizeof(STARTUPINFOEX));
@@ -24,7 +70,7 @@ namespace ubavs {
 		PROCESS_INFORMATION processInfo;
 		ZeroMemory(&processInfo, sizeof(processInfo));
 
-		DWORD creationFlags = CREATE_DEFAULT_ERROR_MODE | CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT | CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW;
+		DWORD creationFlags = CREATE_DEFAULT_ERROR_MODE |  CREATE_UNICODE_ENVIRONMENT | CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW;
 		BOOL inheritHandles = false;
 
 		SIZE_T attributesBufferSize = 0;
@@ -68,22 +114,8 @@ namespace ubavs {
 			return INVALID_HANDLE_VALUE;
 		}
 
-		if (!DetourCreateProcessWithDll(NULL, lpCommandLine, NULL, NULL, inheritHandles, creationFlags, lpEnvironment, lpCurrentDirectory, &si, &processInfo, detoursLib.c_str(), NULL))
+		if (!CreateProcessWithDllEx(NULL, lpCommandLine, NULL, NULL, inheritHandles, creationFlags, lpEnvironment, lpCurrentDirectory, &si, &processInfo, lpDllName))
 			return INVALID_HANDLE_VALUE;
-
-		//if (!AlternateGroupAffinity(processInfo.hThread))
-		//{
-		//	//logger.Error(TC("Failed to set thread group affinity to process"));//% ls. (% ls)"), commandLine.c_str(), LastErrorToText().data);
-		//	return INVALID_HANDLE_VALUE;
-		//}
-
-		if (ResumeThread(processInfo.hThread) == -1)
-		{
-			//logger.Error(TC("Failed to resume thread for"));//% ls. (% ls)", commandLine.c_str(), LastErrorToText().data);
-			return INVALID_HANDLE_VALUE;
-		}
-
-		CloseHandle(processInfo.hThread);
 
 		return processInfo.hProcess;
 	}

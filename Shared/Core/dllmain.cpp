@@ -7,21 +7,12 @@
 #include <detours/detours.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/locale/encoding_utf.hpp>
+#include "Exports/Detours.h"
+#include "Exports/Communication.h"
 
-std::wstring gChannelName = L"UBAVS";
+using namespace ubavs;
 
-BOOL (*True_CreateProcessW)(
-    _In_opt_ LPCWSTR lpApplicationName,
-    _Inout_opt_ LPWSTR lpCommandLine,
-    _In_opt_ LPSECURITY_ATTRIBUTES lpProcessAttributes,
-    _In_opt_ LPSECURITY_ATTRIBUTES lpThreadAttributes,
-    _In_ BOOL bInheritHandles,
-    _In_ DWORD dwCreationFlags,
-    _In_opt_ LPVOID lpEnvironment,
-    _In_opt_ LPCWSTR lpCurrentDirectory,
-    _In_ LPSTARTUPINFOW lpStartupInfo,
-    _Out_ LPPROCESS_INFORMATION lpProcessInformation
-) = ::CreateProcessW;
+std::wstring gCommunicationChannelName = L"UBAVS";
 
 BOOL WINAPI Detoured_CreateProcessW(
     _In_opt_ LPCWSTR lpApplicationName,
@@ -41,7 +32,7 @@ BOOL WINAPI Detoured_CreateProcessW(
     {
         DEBUG_LOG(L"Should be detour. ---> %s\n", lpCommandLine);
 
-        return DetourCreateProcessWithDll(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation, "D:\\Git\\UBAVS\\Binaries\\x64\\Debug\\Core.Test\\Core.dll", True_CreateProcessW);
+        return CreateProcessWithDllEx(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation, L"D:\\Git\\UBAVS\\Binaries\\x64\\Debug\\Core.Test\\Core.dll");
     }
     else if (boost::icontains(lpCommandLine, "tracker.exe"))
     {
@@ -69,9 +60,44 @@ BOOL WINAPI Detoured_CreateProcessW(
         try
         {
             std::string serializedMessage = message.SerializeAsString();
-            std::wstring serializedMessageW = boost::locale::conv::utf_to_utf<wchar_t>(serializedMessage);
 
-            DEBUG_LOG(L"Send ---> %s\n", serializedMessageW);
+            MemoryMappedFile mappedFile(gCommunicationChannelName.c_str());
+            Segment* segment = mappedFile.Commit();
+            if (segment->IsValid() == false)
+            {
+                DEBUG_LOG(L"segment is not valid\n");
+                // LOG
+            }
+
+            SetState(segment, MemoryMappedFileAccessState::ProviderWrite);
+            Write(segment, serializedMessage.data(), serializedMessage.size());
+            SetState(segment, MemoryMappedFileAccessState::ProviderDone);
+            DEBUG_LOG(L"sent ---> %d", serializedMessage.size());
+
+            // wait for host to process
+            int count = 5;
+            while (GetState(segment) != MemoryMappedFileAccessState::HostDone && count > 0)
+            {
+                Sleep(1000);
+                count--;
+                DEBUG_LOG(L"wait! %d\n", count);
+            }
+
+            SetState(segment, MemoryMappedFileAccessState::ProviderRead);
+            BuildTaskResult result;
+            Read(segment, &result, sizeof(BuildTaskResult));
+            SetState(segment, MemoryMappedFileAccessState::None);
+
+            mappedFile.Release(segment);
+
+            if (result == BuildTaskResult::Success)
+			{
+				DEBUG_LOG(L"Success\n");
+			}
+			else
+			{
+				DEBUG_LOG(L"Failed\n");
+			}
         }
         catch (const std::exception& e)
         {

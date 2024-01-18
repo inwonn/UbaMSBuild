@@ -1,5 +1,6 @@
 #pragma once
 #include "../../../Shared/Core/Exports/Detours.h"
+#include "../../../Shared/Core/Exports/Communication.h"
 
 #include <gtest/gtest.h>
 #include <filesystem>
@@ -38,19 +39,22 @@ TEST_F(BuildTest, RebuildSolutionTest)
     HANDLE hProcess = ubavs::CreateProcessWithDll((LPWSTR)commandline.c_str(), GetEnvironmentStringsW(), NULL, _detoursLib.wstring().c_str());
     EXPECT_NE(hProcess, INVALID_HANDLE_VALUE);
 
-    //DWORD exieCode;
-    //int receivedCount = 0;
-    //do {
-    //    wchar_t* message = nullptr;
-    //    int error = ubavs::ReadMessage(&message, 10);
-    //    if (error == 0)
-    //    {
-    //        receivedCount++;
-    //        ubavs::FreeReadMessage(message);
-    //    }
-
-    //    GetExitCodeProcess(hProcess, &exieCode);
-    //} while (exieCode == STILL_ACTIVE);
+    DWORD exieCode;
+    int receivedCount = 0;
+    wchar_t message[65536] = { 0, };
+    do {
+        unsigned int size = ubavs::HostGetBuildTaskCount(L"UBAVS");
+        for (unsigned int i = 0; i < size; ++i)
+        {
+            if (ubavs::HostGetBuildTask(L"UBAVS", i, message))
+			{
+                Sleep(1000);
+                ubavs::HostSetBuildTaskResult(L"UBAVS", i, 1);
+				++receivedCount;
+			}
+        }
+        GetExitCodeProcess(hProcess, &exieCode);
+    } while (exieCode == STILL_ACTIVE);
 
     /*EXPECT_EQ(receivedCount, 2);
     EXPECT_EQ(exieCode, 0);

@@ -17,17 +17,20 @@ namespace ubavs {
 
 	class Segment
 	{
+		friend class MemoryMappedFile;
 	public:
 		struct Header
 		{
 			SegmentState state;
-			int size;
 		};
 
 		bool IsValid();
+
+	private:
 		void Commit();
 		void Release();
 
+	public:
 		uint8_t data[SEGMENT_SIZE - sizeof(Header)];
 
 	private:
