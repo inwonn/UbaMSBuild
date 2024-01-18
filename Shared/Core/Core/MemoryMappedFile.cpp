@@ -6,16 +6,19 @@
 
 namespace ubavs {
 
-	void Segment::Write(const void* buffer, int size)
+	bool Segment::IsValid()
 	{
-		header.size = size;
-		memcpy(data, buffer, size);
+		return InterlockedCompareExchange((uint32_t*)& header.state, 0, 0) == SegmentState::Allocated;
 	}
 
-	void Segment::Read(void** buffer, int* size)
+	void Segment::Commit()
 	{
-		*size = header.size;
-		memcpy(data, *buffer, header.size);
+		InterlockedCompareExchange((uint32_t*)&header.state, SegmentState::Free, SegmentState::Allocated);
+	}
+
+	void Segment::Release()
+	{
+		InterlockedCompareExchange((uint32_t*)&header.state, SegmentState::Allocated, SegmentState::Free);
 	}
 
 	MemoryMappedFile::MemoryMappedFile(const wchar_t* name)
@@ -53,61 +56,54 @@ namespace ubavs {
 		CloseHandle(_hMapFile);
 	}
 
-	Segment* MemoryMappedFile::Alloc()
+	Segment* MemoryMappedFile::Commit()
 	{
+		uint32_t capacity = InterlockedCompareExchange(&_header->capacity, 0, 0);
 		LARGE_INTEGER offset;
-		offset.QuadPart = SEGMENT_SIZE;
 
-		for (int idx = 0; idx < _header->capacity; idx++)
+		for (uint32_t idx = 0; idx < capacity; idx++)
 		{
+			offset.QuadPart = SEGMENT_SIZE * (idx + 1);
 			Segment* segment = (Segment*)MapViewOfFile(_hMapFile, FILE_MAP_ALL_ACCESS, offset.HighPart, offset.LowPart, SEGMENT_SIZE);
-			if (segment != nullptr && segment->header.state == SegmentState::Free)
+			if (segment != nullptr && segment->IsValid())
 			{
 				return segment;
 			}
-			offset.QuadPart += SEGMENT_SIZE;
 		}
 
+		capacity = InterlockedIncrement(&_header->capacity);
+		offset.QuadPart = SEGMENT_SIZE * (capacity);
 		Segment* segment = (Segment*)MapViewOfFile(_hMapFile, FILE_MAP_ALL_ACCESS, offset.HighPart, offset.LowPart, SEGMENT_SIZE);
-		if (segment != nullptr)
+		if (segment == nullptr)
 		{
-			if (!::VirtualAlloc(segment, SEGMENT_SIZE, MEM_COMMIT, PAGE_READWRITE))
-			{
-				// LOG
-			}
+			// LOG
+		}
 
-			segment->header.state = SegmentState::Allocated;
-			segment->header.size = 0;
-			segment->header.index = _header->capacity;
-			_header->capacity++;
-
-			return segment;
+		if (!::VirtualAlloc(segment, SEGMENT_SIZE, MEM_COMMIT, PAGE_READWRITE))
+		{
+			// LOG
 		}
 		
+		segment->Commit();
 
-		return nullptr;
+		return segment;
 	}
-	void MemoryMappedFile::Free(Segment* segment)
+
+	void MemoryMappedFile::Release(Segment* segment)
 	{
-		segment->header.state = SegmentState::Free;
-		segment->header.size = 0;
-		segment->header.index = 0;
+		segment->Release();
 	}
 
-	void MemoryMappedFile::ForEach(std::function<void(Segment*)> callback)
+	uint32_t MemoryMappedFile::GetCapacity()
+	{
+		return InterlockedCompareExchange((uint32_t*)& _header->capacity, 0, 0);
+	}
+
+	Segment* MemoryMappedFile::Get(uint32_t idx)
 	{
 		LARGE_INTEGER offset;
-		offset.QuadPart = SEGMENT_SIZE;
-
-		for (int idx = 0; idx < _header->capacity; idx++)
-		{
-			Segment* segment = (Segment*)MapViewOfFile(_hMapFile, FILE_MAP_ALL_ACCESS, offset.HighPart, offset.LowPart, SEGMENT_SIZE);
-			if (segment != nullptr)
-			{
-				callback(segment);
-			}
-			offset.QuadPart += SEGMENT_SIZE;
-		}
+		offset.QuadPart = SEGMENT_SIZE * (idx + 1);
+		return (Segment*)MapViewOfFile(_hMapFile, FILE_MAP_ALL_ACCESS, offset.HighPart, offset.LowPart, SEGMENT_SIZE);
 	}
 
 	void Test()
@@ -116,21 +112,13 @@ namespace ubavs {
 		MemoryMappedFile shm2(L"UBAVS");
 		MemoryMappedFile shm3(L"UBAVS");
 
-		Segment* p2 = shm2.Alloc();
-		Segment* p3 = shm3.Alloc();
+		Segment* p2 = shm2.Commit();
+		Segment* p3 = shm3.Commit();
 
 		const char* msg = "Hello World";
-		p2->Write(msg, strlen(msg));
+		//p2->Write(msg, strlen(msg));
 
 		const char* msg2 = "Hello World2";
-		p3->Write(msg2, strlen(msg2));
-
-		shm1.ForEach([&](Segment* segment) {
-			if (segment->header.state == SegmentState::Allocated)
-			{
-				std::string str((char*)segment->data, segment->header.size);
-				shm1.Free(segment);
-			}
-		});
+		//p3->Write(msg2, strlen(msg2));
 	}
 }

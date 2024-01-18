@@ -9,26 +9,29 @@ namespace ubavs {
 	static const int SEGMENT_SIZE = 65536;
 	static const int SEGMENT_COUNT = 32;
 
-	enum class SegmentState
+	enum SegmentState : uint32_t
 	{
 		Free = 0,
-		Allocated = 1
+		Allocated = 1,
 	};
 
-	struct Segment
+	class Segment
 	{
+	public:
 		struct Header
 		{
 			SegmentState state;
-			int index;
 			int size;
 		};
 
-		void Write(const void* buffer, int size);
-		void Read(void** buffer, int* size);
+		bool IsValid();
+		void Commit();
+		void Release();
 
+		uint8_t data[SEGMENT_SIZE - sizeof(Header)];
+
+	private:
 		Header header;
-		unsigned char data[SEGMENT_SIZE - sizeof(Header)];
 	};
 
 	class MemoryMappedFile
@@ -36,7 +39,7 @@ namespace ubavs {
 	public:
 		struct MemoryMappedFileHeader
 		{
-			int capacity = 0;
+			uint32_t capacity = 0;
 		};
 
 	public:
@@ -45,9 +48,11 @@ namespace ubavs {
 		MemoryMappedFile(const wchar_t* name);
 		~MemoryMappedFile();
 
-		Segment* Alloc();
-		void Free(Segment* Segment);
-		void ForEach(std::function<void(Segment*)> callback);
+		Segment* Commit();
+		void Release(Segment* Segment);
+
+		uint32_t GetCapacity();
+		Segment* Get(uint32_t idx);
 
 	private:
 		HANDLE _hMapFile;
