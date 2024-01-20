@@ -1,28 +1,17 @@
 #include "pch.h"
 #include "Detours.h"
 
-#include <detours/detours.h>
 #include <vector>
 #include <string>
 #include <boost/scope_exit.hpp>
 #include <boost/locale.hpp>
+#include <detours/detours.h>
 
 namespace ubavs {
 
-	BOOL(*True_CreateProcessW)(
-		_In_opt_ LPCWSTR lpApplicationName,
-		_Inout_opt_ LPWSTR lpCommandLine,
-		_In_opt_ LPSECURITY_ATTRIBUTES lpProcessAttributes,
-		_In_opt_ LPSECURITY_ATTRIBUTES lpThreadAttributes,
-		_In_ BOOL bInheritHandles,
-		_In_ DWORD dwCreationFlags,
-		_In_opt_ LPVOID lpEnvironment,
-		_In_opt_ LPCWSTR lpCurrentDirectory,
-		_In_ LPSTARTUPINFOW lpStartupInfo,
-		_Out_ LPPROCESS_INFORMATION lpProcessInformation
-		) = ::CreateProcessW;
+	CreateProcessW_t True_CreateProcessW = ::CreateProcessW;
 
-	CORE_API BOOL CreateProcessWithDllEx(
+	BOOL CreateProcessWithDllEx(
 		LPCWSTR lpApplicationName,
 		LPWSTR lpCommandLine,
 		LPSECURITY_ATTRIBUTES lpProcessAttributes,
@@ -33,13 +22,23 @@ namespace ubavs {
 		LPCWSTR lpCurrentDirectory,
 		LPSTARTUPINFOW lpStartupInfo,
 		LPPROCESS_INFORMATION lpProcessInformation,
-		LPCWSTR lpDllName)
+		LPCWSTR lpBuildId,
+		LPCWSTR lpDetoursLib,
+		CreateProcessW_t pfCreateProcessW)
 	{
-		std::string detoursLib = boost::locale::conv::utf_to_utf<char>(lpDllName);
-		if (!DetourCreateProcessWithDll(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags | CREATE_SUSPENDED, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation, detoursLib.c_str(), True_CreateProcessW))
+		std::string detoursLib = boost::locale::conv::utf_to_utf<char>(lpDetoursLib);
+		if (!DetourCreateProcessWithDll(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags | CREATE_SUSPENDED, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation, detoursLib.c_str(), pfCreateProcessW))
 		{
 			return FALSE;
-		}	
+		}
+
+		DetoursPayload payload;
+		wcscpy_s(payload.buildId, wcslen(lpBuildId) * sizeof(wchar_t), lpBuildId);
+		wcscpy_s(payload.detoursLib, wcslen(lpDetoursLib) * sizeof(wchar_t), lpDetoursLib);
+		if (!DetourCopyPayloadToProcess((HANDLE)lpProcessInformation->hProcess, DetoursPayloadGuid, &payload, sizeof(payload)))
+		{
+			return FALSE;
+		}
 
 		//if (!AlternateGroupAffinity(lpProcessInformation->hThread))
 		//{
@@ -58,9 +57,8 @@ namespace ubavs {
 
 	HANDLE CreateProcessWithDll(
 		LPWSTR lpCommandLine,
-		LPVOID lpEnvironment,
-		LPCWSTR lpCurrentDirectory,
-		LPCWSTR lpDllName)
+		LPCWSTR lpBuildId,
+		LPCWSTR lpDetoursLib)
 	{
 		STARTUPINFOEX siex;
 		STARTUPINFO& si = siex.StartupInfo;
@@ -76,7 +74,7 @@ namespace ubavs {
 		SIZE_T attributesBufferSize = 0;
 		::InitializeProcThreadAttributeList(nullptr, 1, 0, &attributesBufferSize);
 
-		std::vector<unsigned char> attributesBuffer(attributesBufferSize, 0);
+		std::vector<u8_t> attributesBuffer(attributesBufferSize, 0);
 
 		PPROC_THREAD_ATTRIBUTE_LIST attributes = reinterpret_cast<PPROC_THREAD_ATTRIBUTE_LIST>(attributesBuffer.data());
 		if (!::InitializeProcThreadAttributeList(attributes, 1, 0, &attributesBufferSize))
@@ -114,7 +112,7 @@ namespace ubavs {
 			return INVALID_HANDLE_VALUE;
 		}
 
-		if (!CreateProcessWithDllEx(NULL, lpCommandLine, NULL, NULL, inheritHandles, creationFlags, lpEnvironment, lpCurrentDirectory, &si, &processInfo, lpDllName))
+		if (!CreateProcessWithDllEx(NULL, lpCommandLine, NULL, NULL, inheritHandles, creationFlags, NULL, NULL, &si, &processInfo, lpBuildId, lpDetoursLib, True_CreateProcessW))
 			return INVALID_HANDLE_VALUE;
 
 		return processInfo.hProcess;

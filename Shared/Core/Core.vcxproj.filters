@@ -3,26 +3,26 @@
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="Core\Core.h">
+    <ClInclude Include="Core\Export.h">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\Debug.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Messages\BuildMessage.pb.h">
-      <Filter>Messages</Filter>
-    </ClInclude>
-    <ClInclude Include="Messages\MessageType.pb.h">
-      <Filter>Messages</Filter>
-    </ClInclude>
-    <ClInclude Include="Exports\Detours.h">
-      <Filter>Exports</Filter>
-    </ClInclude>
     <ClInclude Include="Core\MemoryMappedFile.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Exports\Communication.h">
-      <Filter>Exports</Filter>
+    <ClInclude Include="Core\Types.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\BuildTask.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Detours.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Generated\BuildMessage.pb.h">
+      <Filter>Generated</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -31,31 +31,25 @@
     <ClCompile Include="Core\Debug.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Messages\BuildMessage.pb.cc">
-      <Filter>Messages</Filter>
-    </ClCompile>
-    <ClCompile Include="Messages\MessageType.pb.cc">
-      <Filter>Messages</Filter>
-    </ClCompile>
-    <ClCompile Include="Exports\Detours.cpp">
-      <Filter>Exports</Filter>
-    </ClCompile>
     <ClCompile Include="Core\MemoryMappedFile.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Exports\Communication.cpp">
-      <Filter>Exports</Filter>
+    <ClCompile Include="Core\BuildTask.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Detours.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Generated\BuildMessage.pb.cc">
+      <Filter>Generated</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Core">
       <UniqueIdentifier>{f141e1fb-858f-47ea-9f93-6cf35394e108}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Messages">
+    <Filter Include="Generated">
       <UniqueIdentifier>{bf6d2e28-3c65-4e23-8ab0-e9000e094f0c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Exports">
-      <UniqueIdentifier>{8b659f69-04c6-4f98-ac66-c22038e0e626}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

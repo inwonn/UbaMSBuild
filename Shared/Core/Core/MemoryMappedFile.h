@@ -1,15 +1,12 @@
 #pragma once
-
-#include "Core.h"
-#include <Windows.h>
-#include <functional>
+#include "Types.h"
 
 namespace ubavs {
 
 	static const int SEGMENT_SIZE = 65536;
 	static const int SEGMENT_COUNT = 32;
 
-	enum SegmentState : uint32_t
+	enum SegmentState : u32_t
 	{
 		Free = 0,
 		Allocated = 1,
@@ -31,7 +28,7 @@ namespace ubavs {
 		void Release();
 
 	public:
-		uint8_t data[SEGMENT_SIZE - sizeof(Header)];
+		u8_t data[SEGMENT_SIZE - sizeof(Header)];
 
 	private:
 		Header header;
@@ -42,7 +39,8 @@ namespace ubavs {
 	public:
 		struct MemoryMappedFileHeader
 		{
-			uint32_t capacity = 0;
+			u32_t allocCapacity = 0;
+			u32_t capacity = 0;
 		};
 
 	public:
@@ -54,13 +52,32 @@ namespace ubavs {
 		Segment* Commit();
 		void Release(Segment* Segment);
 
-		uint32_t GetCapacity();
-		Segment* Get(uint32_t idx);
+		u32_t GetCapacity();
+		Segment* Get(u32_t idx);
+
+	private:
+		u32_t GetAllocCapacity();
 
 	private:
 		HANDLE _hMapFile;
 		MemoryMappedFileHeader* _header;
 	};
 
-	extern "C" CORE_API void Test();
+	class ScopedSegment
+	{
+	public:
+		ScopedSegment(MemoryMappedFile& mappedFile) 
+			: _mappedFile(mappedFile) {
+			_segment = mappedFile.Commit();
+		}
+		~ScopedSegment() {
+			_mappedFile.Release(_segment);
+		}
+
+		Segment* Get() { return _segment; }
+
+	private:
+		MemoryMappedFile& _mappedFile;
+		Segment* _segment;
+	};
 }

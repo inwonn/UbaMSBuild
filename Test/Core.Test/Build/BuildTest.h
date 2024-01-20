@@ -1,6 +1,7 @@
 #pragma once
-#include "../../../Shared/Core/Exports/Detours.h"
-#include "../../../Shared/Core/Exports/Communication.h"
+#include <Core/Detours.h>
+#include <Core/BuildTask.h>
+#include <Core/Types.h>
 
 #include <gtest/gtest.h>
 #include <filesystem>
@@ -35,33 +36,36 @@ public:
 
 TEST_F(BuildTest, RebuildSolutionTest)
 {
+    const wchar_t* buildId = L"UbaBuildTestId";
     std::wstring commandline = std::format(L"\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\devenv.exe\" {} /Rebuild \"Debug|x64\"", _solutionPath.wstring().c_str());
-    HANDLE hProcess = ubavs::CreateProcessWithDll((LPWSTR)commandline.c_str(), GetEnvironmentStringsW(), NULL, _detoursLib.wstring().c_str());
+    HANDLE hProcess = ubavs::CreateProcessWithDll((LPWSTR)commandline.c_str(), buildId, _detoursLib.wstring().c_str());
     EXPECT_NE(hProcess, INVALID_HANDLE_VALUE);
 
     DWORD exieCode;
     int receivedCount = 0;
-    wchar_t message[65536] = { 0, };
+    std::vector<ubavs::u8_t> data(65536, 0);
+    unsigned int dataSize = 0;
     do {
-        unsigned int size = ubavs::HostGetBuildTaskCount(L"UBAVS");
-        for (unsigned int i = 0; i < size; ++i)
+        unsigned int taskCount = ubavs::HostGetBuildTaskCount(buildId);
+        for (unsigned int taskId = 0; taskId < taskCount; ++taskId)
         {
-            if (ubavs::HostGetBuildTask(L"UBAVS", i, message))
+            void* dataPtr = data.data();
+            if (ubavs::HostGetBuildMessage(buildId, taskId, &dataPtr, &dataSize))
 			{
-                Sleep(1000);
-                ubavs::HostSetBuildTaskResult(L"UBAVS", i, 1);
 				++receivedCount;
+                printf("received ---> %d\n", dataSize);
+                ubavs::HostSetBuildTaskStatus(buildId, taskId, 1);
 			}
         }
         GetExitCodeProcess(hProcess, &exieCode);
     } while (exieCode == STILL_ACTIVE);
 
-    /*EXPECT_EQ(receivedCount, 2);
+    EXPECT_EQ(receivedCount, 2);
     EXPECT_EQ(exieCode, 0);
 
     std::filesystem::path outputBinaryPath = _solutionPath.parent_path() / "x64" / "Debug" / "BuildTest.exe";
     std::filesystem::path outputPdbPath = _solutionPath.parent_path() / "x64" / "Debug" / "BuildTest.pdb";
 
     EXPECT_TRUE(std::filesystem::exists(outputBinaryPath));
-    EXPECT_TRUE(std::filesystem::exists(outputPdbPath));*/
+    EXPECT_TRUE(std::filesystem::exists(outputPdbPath));
 }

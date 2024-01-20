@@ -1,5 +1,5 @@
 #pragma once
-#include "../../../Shared/Core/Core/MemoryMappedFile.h"
+#include "Core/MemoryMappedFile.h"
 
 #include <gtest/gtest.h>
 #include <filesystem>
@@ -22,5 +22,4 @@ protected:
 
 TEST_F(ShardMemoryTest, WriteReadTest)
 {
-	ubavs::Test();
 }

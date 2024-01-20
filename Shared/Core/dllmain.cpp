@@ -1,18 +1,19 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "pch.h"
-#include "Core/Core.h"
+#include "Core/BuildTask.h"
+#include "Core/Debug.h"
+#include "Core/Detours.h"
 #include "Core/MemoryMappedFile.h"
-#include "Messages/BuildMessage.pb.h"
+#include "Generated/BuildMessage.pb.h"
 
 #include <detours/detours.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/locale/encoding_utf.hpp>
-#include "Exports/Detours.h"
-#include "Exports/Communication.h"
 
 using namespace ubavs;
 
-std::wstring gCommunicationChannelName = L"UBAVS";
+std::wstring g_buildId = L"UBAVS";
+std::wstring g_detoursLib = L"D:\\Git\\UBAVS\\Binaries\\x64\\Debug\\Core.Test\\Core.dll";
 
 BOOL WINAPI Detoured_CreateProcessW(
     _In_opt_ LPCWSTR lpApplicationName,
@@ -32,7 +33,7 @@ BOOL WINAPI Detoured_CreateProcessW(
     {
         DEBUG_LOG(L"Should be detour. ---> %s\n", lpCommandLine);
 
-        return CreateProcessWithDllEx(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation, L"D:\\Git\\UBAVS\\Binaries\\x64\\Debug\\Core.Test\\Core.dll");
+        return CreateProcessWithDllEx(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation, g_buildId.c_str(), g_detoursLib.c_str(), True_CreateProcessW);
     }
     else if (boost::icontains(lpCommandLine, "tracker.exe"))
     {
@@ -59,38 +60,20 @@ BOOL WINAPI Detoured_CreateProcessW(
 
         try
         {
-            std::string serializedMessage = message.SerializeAsString();
-
-            MemoryMappedFile mappedFile(gCommunicationChannelName.c_str());
-            Segment* segment = mappedFile.Commit();
-            if (segment->IsValid() == false)
+            MemoryMappedFile mappedFile(g_buildId.c_str());
+            ScopedSegment segment(mappedFile);
+            if (segment.Get()->IsValid() == false)
             {
                 DEBUG_LOG(L"segment is not valid\n");
                 // LOG
             }
 
-            SetState(segment, MemoryMappedFileAccessState::ProviderWrite);
-            Write(segment, serializedMessage.data(), serializedMessage.size());
-            SetState(segment, MemoryMappedFileAccessState::ProviderDone);
-            DEBUG_LOG(L"sent ---> %d", serializedMessage.size());
+            BuildTask task(segment.Get());
 
-            // wait for host to process
-            int count = 5;
-            while (GetState(segment) != MemoryMappedFileAccessState::HostDone && count > 0)
-            {
-                Sleep(1000);
-                count--;
-                DEBUG_LOG(L"wait! %d\n", count);
-            }
+            task.ProviderRun(message);
+            BuildTaskStatus result = task.ProviderGetResult(5000);
 
-            SetState(segment, MemoryMappedFileAccessState::ProviderRead);
-            BuildTaskResult result;
-            Read(segment, &result, sizeof(BuildTaskResult));
-            SetState(segment, MemoryMappedFileAccessState::None);
-
-            mappedFile.Release(segment);
-
-            if (result == BuildTaskResult::Success)
+            if (result == BuildTaskStatus_Completed)
 			{
 				DEBUG_LOG(L"Success\n");
 			}
@@ -118,19 +101,46 @@ BOOL APIENTRY DllMain( HMODULE hModule,
                        LPVOID lpReserved
                      )
 {
+    wchar_t path[MAX_PATH] = { 0 ,};
+    if (GetModuleFileNameW(NULL, path, MAX_PATH))
+    {
+        if (boost::icontains(path, L"devenv.exe") == false &&
+            boost::icontains(path, L"msbuild.exe") == false)
+        {
+            DEBUG_LOG(L"detour filtered %s\n", path);
+            return TRUE;
+        }
+    }
+
     if (DetourIsHelperProcess())
         return TRUE;
 
     switch (ul_reason_for_call)
     {
     case DLL_PROCESS_ATTACH:
-        DEBUG_LOG(L"DLL_PROCESS_ATTACH\n");
+    {
         DetourRestoreAfterWith();
-		DetourTransactionBegin();
-		DetourUpdateThread(GetCurrentThread());
-		DetourAttach(&(PVOID&)True_CreateProcessW, Detoured_CreateProcessW);
-		DetourTransactionCommit();
-		break;
+        DetourTransactionBegin();
+        DetourUpdateThread(GetCurrentThread());
+        DetourAttach(&(PVOID&)True_CreateProcessW, Detoured_CreateProcessW);
+        DetourTransactionCommit();
+
+        for (HMODULE hMod = NULL; (hMod = DetourEnumerateModules(hMod)) != NULL;) {
+            ULONG cbData;
+            PVOID pvData = DetourFindPayload(hMod, DetoursPayloadGuid, &cbData);
+
+            if (pvData != NULL) {
+                DetoursPayload* payload = (DetoursPayload*)(pvData);
+
+                g_buildId = payload->buildId;
+                g_detoursLib = payload->detoursLib;
+                DEBUG_LOG(L"buildId : %s\n", payload->buildId);
+                DEBUG_LOG(L"detoursLib : %s\n", payload->detoursLib);
+                break;
+            }
+        }
+        break;
+    }	
     case DLL_PROCESS_DETACH:
         DetourTransactionBegin();
         DetourUpdateThread(GetCurrentThread());
