@@ -12,8 +12,8 @@
 
 using namespace ubavs;
 
-std::wstring g_buildId = L"UBAVS";
-std::wstring g_detoursLib = L"D:\\Git\\UBAVS\\Binaries\\x64\\Debug\\Core.Test\\Core.dll";
+std::wstring g_buildId;
+std::wstring g_detoursLib;
 
 BOOL WINAPI Detoured_CreateProcessW(
     _In_opt_ LPCWSTR lpApplicationName,

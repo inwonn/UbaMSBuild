@@ -7,12 +7,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Core.Test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="SharedMemory\SharedMemoryTest.h" />
     <ClInclude Include="Build\BuildTest.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="UbaMSBuild.Core.Test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

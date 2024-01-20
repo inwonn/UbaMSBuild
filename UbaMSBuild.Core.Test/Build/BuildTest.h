@@ -18,7 +18,7 @@ protected:
         TCHAR buffer[MAX_PATH] = { 0 };
         GetModuleFileName(NULL, buffer, MAX_PATH);
         std::filesystem::path currentModulePath(buffer);
-        _detoursLib = currentModulePath.parent_path() / "Core.dll";
+        _detoursLib = currentModulePath.parent_path() / "UbaMSBuild.Core.dll";
         _solutionPath = currentModulePath.parent_path() / "TestData" / "BuildTest" / "BuildTest.sln";
 
         SetEnvironmentVariableW(L"MSBUILDDISABLENODEREUSE", L"1");
