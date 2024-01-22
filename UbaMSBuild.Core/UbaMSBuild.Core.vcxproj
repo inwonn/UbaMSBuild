@@ -188,23 +188,30 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Core\BuildTask.h" />
+    <ClInclude Include="Core\SharedToolTask.h" />
     <ClInclude Include="Core\Detours.h" />
     <ClInclude Include="Core\Export.h" />
     <ClInclude Include="Core\Debug.h" />
     <ClInclude Include="Core\MemoryMappedFile.h" />
     <ClInclude Include="Core\Types.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="Generated\BuildMessage.pb.h" />
+    <ClInclude Include="Generated\ToolTask.pb.h" />
+    <ClInclude Include="Generated\ToolTaskStatus.pb.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Core\BuildTask.cpp" />
+    <ClCompile Include="Core\SharedToolTask.cpp" />
     <ClCompile Include="Core\Debug.cpp" />
     <ClCompile Include="Core\Detours.cpp" />
     <ClCompile Include="Core\MemoryMappedFile.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="Generated\BuildMessage.pb.cc">
+    <ClCompile Include="Generated\ToolTask.pb.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Generated\ToolTaskStatus.pb.cc">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>

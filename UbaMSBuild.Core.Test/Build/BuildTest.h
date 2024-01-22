@@ -1,6 +1,6 @@
 #pragma once
 #include <Core/Detours.h>
-#include <Core/BuildTask.h>
+#include <Core/SharedToolTask.h>
 #include <Core/Types.h>
 
 #include <gtest/gtest.h>
@@ -46,15 +46,15 @@ TEST_F(BuildTest, RebuildSolutionTest)
     std::vector<ubavs::u8_t> data(65536, 0);
     unsigned int dataSize = 0;
     do {
-        unsigned int taskCount = ubavs::HostGetBuildTaskCount(buildId);
+        unsigned int taskCount = ubavs::HostGetToolTaskCount(buildId);
         for (unsigned int taskId = 0; taskId < taskCount; ++taskId)
         {
             void* dataPtr = data.data();
-            if (ubavs::HostGetBuildMessage(buildId, taskId, &dataPtr, &dataSize))
+            if (ubavs::HostGetToolTask(buildId, taskId, &dataPtr, &dataSize))
 			{
 				++receivedCount;
                 printf("received ---> %d\n", dataSize);
-                ubavs::HostSetBuildTaskStatus(buildId, taskId, 1);
+                ubavs::HostSetToolTaskStatus(buildId, taskId, 1);
 			}
         }
         GetExitCodeProcess(hProcess, &exieCode);

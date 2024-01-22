@@ -15,13 +15,16 @@
     <ClInclude Include="Core\Types.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Core\BuildTask.h">
+    <ClInclude Include="Core\SharedToolTask.h">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\Detours.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Generated\BuildMessage.pb.h">
+    <ClInclude Include="Generated\ToolTask.pb.h">
+      <Filter>Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="Generated\ToolTaskStatus.pb.h">
       <Filter>Generated</Filter>
     </ClInclude>
   </ItemGroup>
@@ -34,13 +37,16 @@
     <ClCompile Include="Core\MemoryMappedFile.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Core\BuildTask.cpp">
+    <ClCompile Include="Core\SharedToolTask.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\Detours.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Generated\BuildMessage.pb.cc">
+    <ClCompile Include="Generated\ToolTask.pb.cc">
+      <Filter>Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="Generated\ToolTaskStatus.pb.cc">
       <Filter>Generated</Filter>
     </ClCompile>
   </ItemGroup>

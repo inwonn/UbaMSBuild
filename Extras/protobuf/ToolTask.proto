@@ -2,7 +2,9 @@ syntax = "proto3";
 
 package ubavs;
 
-message BuildMessage {
+option csharp_namespace = "UbaBuildSystem.Plugins.MSBuild.Generated";
+
+message ToolTask {
   optional string commandLine = 1;
   optional string currentDirectory =  2;
   repeated string environment = 3;

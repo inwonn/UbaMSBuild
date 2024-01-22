@@ -1,10 +1,11 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "pch.h"
-#include "Core/BuildTask.h"
 #include "Core/Debug.h"
 #include "Core/Detours.h"
 #include "Core/MemoryMappedFile.h"
-#include "Generated/BuildMessage.pb.h"
+#include "Core/SharedToolTask.h"
+#include "Generated/ToolTask.pb.h"
+#include "Generated/ToolTaskStatus.pb.h"
 
 #include <detours/detours.h>
 #include <boost/algorithm/string.hpp>
@@ -39,7 +40,7 @@ BOOL WINAPI Detoured_CreateProcessW(
     {
         DEBUG_LOG(L"Should be send to host. ---> %s\n", lpCommandLine);
 
-        ubavs::BuildMessage message;
+        ubavs::ToolTask message;
         DEBUG_LOG(L"CommandLine : %s\n", lpCommandLine);
         std::string commandLine = boost::locale::conv::utf_to_utf<char>(lpCommandLine);
         message.set_commandline(commandLine);
@@ -68,12 +69,12 @@ BOOL WINAPI Detoured_CreateProcessW(
                 // LOG
             }
 
-            BuildTask task(segment.Get());
+            SharedToolTask task(segment.Get());
 
             task.ProviderRun(message);
-            BuildTaskStatus result = task.ProviderGetResult(5000);
+            ToolTaskStatus result = task.ProviderGetResult(5000);
 
-            if (result == BuildTaskStatus_Completed)
+            if (result == ubavs::ToolTaskStatus::Completed)
 			{
 				DEBUG_LOG(L"Success\n");
 			}

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package ubavs;
+
+option csharp_namespace = "UbaBuildSystem.Plugins.MSBuild.Generated";
+
+enum ToolTaskStatus {
+  Created = 0;
+	Cancelled = 1;
+	Completed = 2;
+	Faulted = 3;
+	ProviderRunning = 4;
+	ProviderRanToCompletion = 5;
+	ProviderFaulted = 6;
+	HostRunning = 7;
+	HostRanToCompletion = 8;
+	HostFaulted = 9;
+}
