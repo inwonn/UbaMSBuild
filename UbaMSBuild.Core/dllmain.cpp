@@ -46,10 +46,26 @@ BOOL WINAPI Detoured_CreateProcessW(
         message.set_commandline(commandLine);
 
         DEBUG_LOG(L"CurrentDirectory : %s\n", lpCurrentDirectory);
-        std::string currentDirectory = boost::locale::conv::utf_to_utf<char>(lpCurrentDirectory);
-        message.set_currentdirectory(boost::locale::conv::utf_to_utf<char>(currentDirectory));
+        if (lpCurrentDirectory != NULL)
+		{
+            std::string currentDirectory = boost::locale::conv::utf_to_utf<char>(lpCurrentDirectory);
+            message.set_currentdirectory(currentDirectory);
+		}
+        else
+        {
+            wchar_t currentDirectoryW[MAX_PATH] = { 0, };
+            GetCurrentDirectoryW(MAX_PATH, currentDirectoryW);
+            std::string currentDirectory = boost::locale::conv::utf_to_utf<char>(currentDirectoryW);
+            message.set_currentdirectory(currentDirectory);
+        }
+        
 
         const wchar_t* lpEnv = static_cast<const wchar_t*>(lpEnvironment);
+        if (lpEnv == nullptr)
+        {
+            lpEnv = GetEnvironmentStringsW();
+        }
+
         while (*lpEnv != L'\0')
         {
             DEBUG_LOG(L"Env : %s\n", lpEnv);
@@ -66,7 +82,6 @@ BOOL WINAPI Detoured_CreateProcessW(
             if (segment.Get()->IsValid() == false)
             {
                 DEBUG_LOG(L"segment is not valid\n");
-                // LOG
             }
 
             SharedToolTask task(segment.Get());
