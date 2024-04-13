@@ -66,17 +66,16 @@ BOOL WINAPI Detoured_CreateProcessW(
             lpEnv = GetEnvironmentStringsW();
         }
 
-        std::stringstream envs;
+        nlohmann::json envs = nlohmann::json::array();
         while (*lpEnv != L'\0')
         {
             DEBUG_LOG(L"Env : %s\n", lpEnv);
             std::string env = boost::locale::conv::utf_to_utf<char>(lpEnv);
-            envs << env << '\0';
+            envs.push_back(env);
 
             lpEnv += env.size() + 1;
         }
-        envs << '\0';
-        json['Envs'] = envs.str();
+        json["Envs"] = envs;
 
         try
         {

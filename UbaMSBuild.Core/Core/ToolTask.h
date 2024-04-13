@@ -6,7 +6,6 @@ namespace uba_msbuild {
 
 	class Segment;
 
-
 	enum SegmentOffset : u32_t
 	{
 		SegmentOffset_BuildStatus = 0,

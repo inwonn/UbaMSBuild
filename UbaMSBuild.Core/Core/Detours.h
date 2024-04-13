@@ -27,13 +27,5 @@ namespace uba_msbuild {
         LPCWSTR lpBuildId,
         LPCWSTR lpDetoursLib,
         CreateProcessW_t pfCreateProcessW);
-
-	extern "C" {
-
-		CORE_API HANDLE CreateProcessWithDll(
-			LPWSTR lpCommandLine,
-            LPCWSTR lpBuildId,
-			LPCWSTR lpDetoursLib);
-	}
 }
 

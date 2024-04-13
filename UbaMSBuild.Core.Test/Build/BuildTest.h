@@ -1,7 +1,6 @@
 #pragma once
 #include <Core/Detours.h>
-#include <Core/ToolTask.h>
-#include <Core/Types.h>
+#include <Core/Export.h>
 
 #include <gtest/gtest.h>
 #include <filesystem>
