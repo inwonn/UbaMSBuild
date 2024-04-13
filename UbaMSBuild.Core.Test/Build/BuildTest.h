@@ -37,7 +37,8 @@ TEST_F(BuildTest, RebuildSolutionTest)
 {
     const wchar_t* buildId = L"UbaBuildTestId";
     std::wstring commandline = std::format(L"\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\devenv.exe\" {} /Rebuild \"Debug|x64\"", _solutionPath.wstring().c_str());
-    HANDLE hProcess = uba_msbuild::CreateProcessWithDll((LPWSTR)commandline.c_str(), buildId, _detoursLib.wstring().c_str());
+    DWORD pid = -1;
+    HANDLE hProcess = uba_msbuild::CreateProcessWithDll((LPWSTR)commandline.c_str(), buildId, _detoursLib.wstring().c_str(), &pid);
     EXPECT_NE(hProcess, INVALID_HANDLE_VALUE);
 
     DWORD exieCode;
@@ -49,11 +50,11 @@ TEST_F(BuildTest, RebuildSolutionTest)
         for (unsigned int taskId = 0; taskId < taskCount; ++taskId)
         {
             void* dataPtr = data.data();
-            if (uba_msbuild::GetToolTask(buildId, taskId, &dataPtr, &dataSize))
+            if (uba_msbuild::GetToolTaskStatus(buildId, taskId) == 1/*Created*/ && uba_msbuild::GetToolTask(buildId, taskId, &dataPtr, &dataSize))
 			{
 				++receivedCount;
                 printf("received ---> %d\n", dataSize);
-                uba_msbuild::SetToolTaskStatus(buildId, taskId, 1);
+                uba_msbuild::SetToolTaskStatus(buildId, taskId, 3/*RanToCompletion*/);
 			}
         }
         GetExitCodeProcess(hProcess, &exieCode);

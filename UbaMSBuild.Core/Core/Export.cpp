@@ -1,4 +1,5 @@
 #include "pch.h""
+#include "Debug.h"
 #include "Detours.h"
 #include "Export.h"
 #include "Types.h"
@@ -43,10 +44,24 @@ namespace uba_msbuild
 		return false;
 	}
 
+	CORE_API u32_t GetToolTaskStatus(const wchar_t* buildId, int toolTaskId)
+	{
+		static MemoryMappedFile mappedFile(buildId);
+
+		Segment* segment = mappedFile.Get(toolTaskId);
+		if (segment != nullptr && segment->IsValid())
+		{
+			ToolTask task(segment);
+			return task.GetToolTaskStatus();
+		}
+		return 0xffffffff;
+	}
+
 	HANDLE CreateProcessWithDll(
 		LPWSTR lpCommandLine,
 		LPCWSTR lpBuildId,
-		LPCWSTR lpDetoursLib)
+		LPCWSTR lpDetoursLib,
+		LPDWORD lpProcessId)
 	{
 		STARTUPINFOEX siex;
 		STARTUPINFO& si = siex.StartupInfo;
@@ -67,6 +82,7 @@ namespace uba_msbuild
 		PPROC_THREAD_ATTRIBUTE_LIST attributes = reinterpret_cast<PPROC_THREAD_ATTRIBUTE_LIST>(attributesBuffer.data());
 		if (!::InitializeProcThreadAttributeList(attributes, 1, 0, &attributesBufferSize))
 		{
+			DEBUG_LOG(L"InitializeProcThreadAttributeList failed (%ld)\n", GetLastError());
 			//logger.Error(TC("InitializeProcThreadAttributeList failed (%s)"), LastErrorToText().data);
 			return INVALID_HANDLE_VALUE;
 		}
@@ -96,12 +112,20 @@ namespace uba_msbuild
 
 		if (!::UpdateProcThreadAttribute(attributes, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs, sizeof(jobs), nullptr, nullptr))
 		{
-			//logger.Error(TC("UpdateProcThreadAttribute failed when setting job list (%s)"), LastErrorToText().data);
+			DEBUG_LOG(L"UpdateProcThreadAttribute failed when setting job list (%ld)", GetLastError());
 			return INVALID_HANDLE_VALUE;
 		}
 
 		if (!CreateProcessWithDllEx(NULL, lpCommandLine, NULL, NULL, inheritHandles, creationFlags, NULL, NULL, &si, &processInfo, lpBuildId, lpDetoursLib, True_CreateProcessW))
+		{
+			DEBUG_LOG(L"CreateProcessWithDllEx failed (%ld)", GetLastError());
 			return INVALID_HANDLE_VALUE;
+		}
+
+		if (lpProcessId)
+		{
+			*lpProcessId = processInfo.dwProcessId;
+		}
 
 		return processInfo.hProcess;
 	}

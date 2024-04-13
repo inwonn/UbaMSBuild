@@ -99,9 +99,9 @@ BOOL WINAPI Detoured_CreateProcessW(
             {
 				DEBUG_LOG(L"Faulted\n");
 			}
-            else if (result == uba_msbuild::ToolTaskStatus::Cancelled)
+            else if (result == uba_msbuild::ToolTaskStatus::Canceled)
             {
-				DEBUG_LOG(L"Cancelled\n");
+				DEBUG_LOG(L"Canceled\n");
 			}
         }
         catch (const std::exception& e)

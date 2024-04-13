@@ -17,12 +17,12 @@ namespace uba_msbuild
 
 	void ToolTask::Run(const nlohmann::json& json)
 	{
-		setStatus(Created);
-
 		std::string ToolTaskStr = json.dump();
 		u32_t size = static_cast<u32_t>(ToolTaskStr.size());
 		setToolTask(ToolTaskStr.c_str(), size);
 		DEBUG_LOG(L"sent ---> %d\n", size);
+
+		setStatus(Created);
 	}
 
 	ToolTaskStatus ToolTask::GetResult(int timeout /*= -1*/)
@@ -35,7 +35,7 @@ namespace uba_msbuild
 			switch (status)
 			{
 			case Created:
-			case Cancelled:
+			case Canceled:
 			case RanToCompletion:
 			case Faulted:
 			{
@@ -72,6 +72,11 @@ namespace uba_msbuild
 	void ToolTask::SetToolTaskStatus(ToolTaskStatus buildStatus)
 	{
 		setStatus(buildStatus);
+	}
+
+	ToolTaskStatus ToolTask::GetToolTaskStatus()
+	{
+		return getStatus();
 	}
 
 	void ToolTask::setStatus(ToolTaskStatus status)

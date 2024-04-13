@@ -15,11 +15,12 @@ namespace uba_msbuild {
 
 	enum ToolTaskStatus : u32_t
 	{
-		Created = 0,
-		Cancelled = 1,
-		RanToCompletion = 2,
-		Faulted = 3,
-		Running = 4,
+		None = 0,
+		Created = 1,
+		Canceled = 2,
+		RanToCompletion = 3,
+		Faulted = 4,
+		Running = 5,
 	};
 
 	class ToolTask
@@ -33,6 +34,7 @@ namespace uba_msbuild {
 
 		bool GetToolTask(void** outToolTask, u32_t* size);
 		void SetToolTaskStatus(ToolTaskStatus buildStatus);
+		ToolTaskStatus GetToolTaskStatus();
 
 	private:
 
