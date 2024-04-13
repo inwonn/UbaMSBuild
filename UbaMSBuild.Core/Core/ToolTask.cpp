@@ -95,7 +95,7 @@ namespace uba_msbuild
 	void ToolTask::getToolTask(void** outToolTask, u32_t* size)
 	{
 		memcpy(size, getPtr(SegmentOffset_ToolTaskSize), sizeof(u32_t));
-		memcpy(*outToolTask, getPtr(SegmentOffset_ToolTask), *size);
+		*outToolTask = getPtr(SegmentOffset_ToolTask);
 	}
 
 	void* ToolTask::getPtr(SegmentOffset segmentOffset)
