@@ -22,7 +22,7 @@ namespace uba_msbuild
 		setToolTask(ToolTaskStr.c_str(), size);
 		DEBUG_LOG(L"sent ---> %d\n", size);
 
-		setStatus(Created);
+		setStatus(Running);
 	}
 
 	ToolTaskStatus ToolTask::GetResult(int timeout /*= -1*/)
@@ -34,7 +34,6 @@ namespace uba_msbuild
 			status = getStatus();
 			switch (status)
 			{
-			case Created:
 			case Canceled:
 			case RanToCompletion:
 			case Faulted:
@@ -42,10 +41,8 @@ namespace uba_msbuild
 				isDone = true;
 				break;
 			}
-			case Running:
-				break;
 			default:
-				throw std::exception("Invalid ToolTaskStatus");
+				break;
 			}
 
 			Sleep(1000);
@@ -60,7 +57,7 @@ namespace uba_msbuild
 
 	bool ToolTask::GetToolTask(void** outToolTask, u32_t* size)
 	{
-		if (getStatus() == Created)
+		if (getStatus() == Running)
 		{
 			getToolTask(outToolTask, size);
 			return true;

@@ -1,4 +1,4 @@
-#include "pch.h""
+#include "pch.h"
 #include "Debug.h"
 #include "Detours.h"
 #include "Export.h"

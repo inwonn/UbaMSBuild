@@ -15,12 +15,11 @@ namespace uba_msbuild {
 
 	enum ToolTaskStatus : u32_t
 	{
-		None = 0,
-		Created = 1,
-		Canceled = 2,
-		RanToCompletion = 3,
-		Faulted = 4,
-		Running = 5,
+		Created = 0,
+		Canceled = 1,
+		RanToCompletion = 2,
+		Faulted = 3,
+		Running = 4,
 	};
 
 	class ToolTask

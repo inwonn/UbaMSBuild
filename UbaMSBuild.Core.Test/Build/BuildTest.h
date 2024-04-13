@@ -50,11 +50,11 @@ TEST_F(BuildTest, RebuildSolutionTest)
         for (unsigned int taskId = 0; taskId < taskCount; ++taskId)
         {
             void* dataPtr = data.data();
-            if (uba_msbuild::GetToolTaskStatus(buildId, taskId) == 1/*Created*/ && uba_msbuild::GetToolTask(buildId, taskId, &dataPtr, &dataSize))
+            if (uba_msbuild::GetToolTaskStatus(buildId, taskId) == 4/*Running*/, uba_msbuild::GetToolTask(buildId, taskId, &dataPtr, &dataSize))
 			{
 				++receivedCount;
                 printf("received ---> %d\n", dataSize);
-                uba_msbuild::SetToolTaskStatus(buildId, taskId, 3/*RanToCompletion*/);
+                uba_msbuild::SetToolTaskStatus(buildId, taskId, 2/*RanToCompletion*/);
 			}
         }
         GetExitCodeProcess(hProcess, &exieCode);

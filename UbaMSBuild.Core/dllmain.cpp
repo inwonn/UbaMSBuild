@@ -89,7 +89,7 @@ BOOL WINAPI Detoured_CreateProcessW(
             ToolTask task(segment.Get());
 
             task.Run(json);
-            ToolTaskStatus result = task.GetResult(5000);
+            ToolTaskStatus result = task.GetResult();
 
             if (result == uba_msbuild::ToolTaskStatus::RanToCompletion)
 			{
