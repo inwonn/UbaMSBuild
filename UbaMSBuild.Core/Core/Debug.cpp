@@ -7,7 +7,7 @@
 #include <format>
 #include <filesystem>
 
-namespace ubavs {
+namespace uba_msbuild {
 
 	void OutputDebugStringFormat(const wchar_t* filename, int line, const wchar_t* format, ...)
 	{
@@ -20,7 +20,7 @@ namespace ubavs {
 			vswprintf_s((wchar_t*)buffer.c_str(), len, format, args);
 			va_end(args);
 
-			std::wstring output = std::format(L"[ubavs][{} Line:{}] {}", filename, line, buffer);
+			std::wstring output = std::format(L"[uba_msbuild][{} Line:{}] {}", filename, line, buffer);
 
 			OutputDebugString(output.c_str());
 		}

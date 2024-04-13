@@ -4,7 +4,8 @@
         "detours",
         "boost-scope-exit",
         "boost-locale",
-        "protobuf"
+        "protobuf",
+        "nlohmann-json"
         
     ],
     "overrides": [

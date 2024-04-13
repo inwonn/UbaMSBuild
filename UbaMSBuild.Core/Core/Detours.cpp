@@ -7,7 +7,7 @@
 #include <boost/locale.hpp>
 #include <detours/detours.h>
 
-namespace ubavs {
+namespace uba_msbuild {
 
 	CreateProcessW_t True_CreateProcessW = ::CreateProcessW;
 

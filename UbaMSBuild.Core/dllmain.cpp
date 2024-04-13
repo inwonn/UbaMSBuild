@@ -3,15 +3,15 @@
 #include "Core/Debug.h"
 #include "Core/Detours.h"
 #include "Core/MemoryMappedFile.h"
-#include "Core/SharedToolTask.h"
-#include "Generated/ToolTask.pb.h"
-#include "Generated/ToolTaskStatus.pb.h"
+#include "Core/ToolTask.h"
 
+#include <sstream>
 #include <detours/detours.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/locale/encoding_utf.hpp>
+#include <nlohmann/json.hpp>
 
-using namespace ubavs;
+using namespace uba_msbuild;
 
 std::wstring g_buildId;
 std::wstring g_detoursLib;
@@ -40,23 +40,23 @@ BOOL WINAPI Detoured_CreateProcessW(
     {
         DEBUG_LOG(L"Should be send to host. ---> %s\n", lpCommandLine);
 
-        ubavs::ToolTask message;
+        nlohmann::json json;
         DEBUG_LOG(L"CommandLine : %s\n", lpCommandLine);
         std::string commandLine = boost::locale::conv::utf_to_utf<char>(lpCommandLine);
-        message.set_commandline(commandLine);
+        json["CommandLine"] = commandLine;
 
         DEBUG_LOG(L"CurrentDirectory : %s\n", lpCurrentDirectory);
         if (lpCurrentDirectory != NULL)
 		{
             std::string currentDirectory = boost::locale::conv::utf_to_utf<char>(lpCurrentDirectory);
-            message.set_currentdirectory(currentDirectory);
+            json["CurrentDirectory"] = currentDirectory;
 		}
         else
         {
             wchar_t currentDirectoryW[MAX_PATH] = { 0, };
             GetCurrentDirectoryW(MAX_PATH, currentDirectoryW);
             std::string currentDirectory = boost::locale::conv::utf_to_utf<char>(currentDirectoryW);
-            message.set_currentdirectory(currentDirectory);
+            json["CurrentDirectory"] = currentDirectory;
         }
         
 
@@ -66,14 +66,17 @@ BOOL WINAPI Detoured_CreateProcessW(
             lpEnv = GetEnvironmentStringsW();
         }
 
+        std::stringstream envs;
         while (*lpEnv != L'\0')
         {
             DEBUG_LOG(L"Env : %s\n", lpEnv);
             std::string env = boost::locale::conv::utf_to_utf<char>(lpEnv);
-            message.add_environment(env);
+            envs << env << '\0';
 
             lpEnv += env.size() + 1;
         }
+        envs << '\0';
+        json['Envs'] = envs.str();
 
         try
         {
@@ -84,18 +87,22 @@ BOOL WINAPI Detoured_CreateProcessW(
                 DEBUG_LOG(L"segment is not valid\n");
             }
 
-            SharedToolTask task(segment.Get());
+            ToolTask task(segment.Get());
 
-            task.ProviderRun(message);
-            ToolTaskStatus result = task.ProviderGetResult(5000);
+            task.Run(json);
+            ToolTaskStatus result = task.GetResult(5000);
 
-            if (result == ubavs::ToolTaskStatus::Completed)
+            if (result == uba_msbuild::ToolTaskStatus::RanToCompletion)
 			{
 				DEBUG_LOG(L"Success\n");
 			}
-			else
-			{
-				DEBUG_LOG(L"Failed\n");
+            else if (result == uba_msbuild::ToolTaskStatus::Faulted)
+            {
+				DEBUG_LOG(L"Faulted\n");
+			}
+            else if (result == uba_msbuild::ToolTaskStatus::Cancelled)
+            {
+				DEBUG_LOG(L"Cancelled\n");
 			}
         }
         catch (const std::exception& e)

@@ -1,6 +1,6 @@
 #pragma once
 #include <Core/Detours.h>
-#include <Core/SharedToolTask.h>
+#include <Core/ToolTask.h>
 #include <Core/Types.h>
 
 #include <gtest/gtest.h>
@@ -38,23 +38,23 @@ TEST_F(BuildTest, RebuildSolutionTest)
 {
     const wchar_t* buildId = L"UbaBuildTestId";
     std::wstring commandline = std::format(L"\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\devenv.exe\" {} /Rebuild \"Debug|x64\"", _solutionPath.wstring().c_str());
-    HANDLE hProcess = ubavs::CreateProcessWithDll((LPWSTR)commandline.c_str(), buildId, _detoursLib.wstring().c_str());
+    HANDLE hProcess = uba_msbuild::CreateProcessWithDll((LPWSTR)commandline.c_str(), buildId, _detoursLib.wstring().c_str());
     EXPECT_NE(hProcess, INVALID_HANDLE_VALUE);
 
     DWORD exieCode;
     int receivedCount = 0;
-    std::vector<ubavs::u8_t> data(65536, 0);
+    std::vector<uba_msbuild::u8_t> data(65536, 0);
     unsigned int dataSize = 0;
     do {
-        unsigned int taskCount = ubavs::HostGetToolTaskCount(buildId);
+        unsigned int taskCount = uba_msbuild::GetToolTaskCount(buildId);
         for (unsigned int taskId = 0; taskId < taskCount; ++taskId)
         {
             void* dataPtr = data.data();
-            if (ubavs::HostGetToolTask(buildId, taskId, &dataPtr, &dataSize))
+            if (uba_msbuild::GetToolTask(buildId, taskId, &dataPtr, &dataSize))
 			{
 				++receivedCount;
                 printf("received ---> %d\n", dataSize);
-                ubavs::HostSetToolTaskStatus(buildId, taskId, 1);
+                uba_msbuild::SetToolTaskStatus(buildId, taskId, 1);
 			}
         }
         GetExitCodeProcess(hProcess, &exieCode);

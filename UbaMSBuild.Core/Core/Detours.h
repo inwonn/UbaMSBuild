@@ -2,7 +2,7 @@
 #include "Export.h"
 #include "Types.h"
 
-namespace ubavs {
+namespace uba_msbuild {
     extern CreateProcessW_t True_CreateProcessW;
 
 	struct __declspec(uuid("{a1041c70-bf7c-4e94-8f8b-bacf0f31ba9a}")) DetoursPayload

@@ -1,7 +1,7 @@
 #pragma once
 #include "Windows.h"
 
-namespace ubavs
+namespace uba_msbuild
 {
     typedef BOOL(WINAPI* CreateProcessW_t)(
         _In_opt_ LPCWSTR lpApplicationName,

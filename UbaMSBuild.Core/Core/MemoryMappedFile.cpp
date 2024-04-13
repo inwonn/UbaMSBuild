@@ -3,7 +3,7 @@
 #include "MemoryMappedFile.h"
 #include "Types.h"
 
-namespace ubavs {
+namespace uba_msbuild {
 
 	bool Segment::IsValid()
 	{

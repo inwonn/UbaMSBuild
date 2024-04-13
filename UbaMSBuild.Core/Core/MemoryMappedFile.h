@@ -1,7 +1,7 @@
 #pragma once
 #include "Types.h"
 
-namespace ubavs {
+namespace uba_msbuild {
 
 	static const int SEGMENT_SIZE = 65536;
 	static const int SEGMENT_COUNT = 32;
